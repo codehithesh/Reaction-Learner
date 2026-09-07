@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reaction Learner</title>
+<style>
+  :root { color-scheme: dark; font-family: Inter, system-ui, sans-serif; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:#111; color:#eee; }
+  header { padding:14px 18px; border-bottom:1px solid #2b2b2b; display:flex; gap:12px; align-items:center; }
+  h1 { font-size:18px; margin:0; flex:1; }
+  button, input { font:inherit; }
+  button { border:1px solid #444; background:#222; color:#eee; border-radius:8px; padding:9px 13px; cursor:pointer; }
+  button:hover { background:#2d2d2d; }
+  button.primary { background:#fff; color:#111; border-color:#fff; }
+  button:disabled { opacity:.45; cursor:not-allowed; }
+  main { display:grid; grid-template-columns:minmax(0,1fr) 390px; height:calc(100vh - 57px); }
+  .videoPane { padding:18px; overflow:auto; }
+  video { width:100%; max-height:72vh; background:#000; border-radius:10px; }
+  .controls { display:flex; gap:8px; align-items:center; margin-top:12px; flex-wrap:wrap; }
+  .time { font-variant-numeric:tabular-nums; color:#aaa; }
+  .side { border-left:1px solid #2b2b2b; padding:18px; overflow:auto; }
+  .card { border:1px solid #303030; border-radius:10px; padding:14px; margin-bottom:12px; }
+  .card h2 { font-size:14px; margin:0 0 10px; }
+  textarea { width:100%; min-height:90px; resize:vertical; background:#181818; color:#eee; border:1px solid #3a3a3a; border-radius:8px; padding:10px; }
+  input[type=password], input[type=text] { width:100%; background:#181818; color:#eee; border:1px solid #3a3a3a; border-radius:8px; padding:10px; }
+  .muted { color:#999; font-size:13px; line-height:1.45; }
+  .reaction { border-top:1px solid #2c2c2c; padding-top:12px; margin-top:12px; }
+  .score { font-size:28px; font-weight:700; }
+  pre { white-space:pre-wrap; word-break:break-word; font-family:inherit; line-height:1.45; }
+  #transcriptPreview { max-height:220px; overflow:auto; font-size:13px; color:#bbb; }
+  .row { display:flex; gap:8px; align-items:center; }
+  .row > * { flex:1; }
+  .status { margin-top:8px; font-size:13px; color:#aaa; }
+  @media(max-width:900px) {
+    main { grid-template-columns:1fr; height:auto; }
+    .side { border-left:0; border-top:1px solid #2b2b2b; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Reaction Learner</h1>
+  <button id="openBtn">Choose video</button>
+  <button id="exportJsonBtn" disabled>Export JSON</button>
+  <button id="exportMdBtn" disabled>Export Markdown</button>
+</header>
+
+<main>
+  <section class="videoPane">
+    <video id="video" controls></video>
+    <div class="controls">
+      <button id="reactBtn" class="primary" disabled>🎙 React</button>
+      <button id="finishBtn" disabled>Finish reaction</button>
+      <span class="time" id="time">00:00 / 00:00</span>
+    </div>
+    <div class="status" id="status">Choose a local video to begin.</div>
+  </section>
+
+  <aside class="side">
+    <div class="card">
+      <h2>OpenAI API key</h2>
+      <input id="apiKey" type="password" placeholder="sk-..." autocomplete="off">
+      <div class="muted" style="margin-top:8px">
+        Used directly from this page. It is not saved by this app.
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Transcript</h2>
+      <div id="transcriptPreview" class="muted">No transcript yet.</div>
+      <button id="transcribeBtn" disabled style="margin-top:10px;width:100%">Transcribe video</button>
+    </div>
+
+    <div class="card">
+      <h2>Current reaction</h2>
+      <div class="muted" id="reactionTime">No reaction recorded.</div>
+      <div id="recordingControls" style="margin-top:10px">
+        <textarea id="reactionText" placeholder="Your reaction transcript will appear here..."></textarea>
+      </div>
+      <div style="margin-top:10px">
+        <button id="evaluateBtn" disabled style="width:100%">Evaluate reaction</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Session feedback</h2>
+      <div id="results" class="muted">Nothing evaluated yet.</div>
+    </div>
+  </aside>
+</main>
+
+<script>
+/*
+  MVP notes:
+  - This is intentionally a single HTML file.
+  - No localStorage, IndexedDB, database, or backend.
+  - ffmpeg.wasm is loaded from jsDelivr.
+  - OpenAI is called directly with the user's key.
+  - The transcript/reactions/evaluations exist only in memory.
+*/
+
+const $ = id => document.getElementById(id);
+
+const video = $("video");
+const openBtn = $("openBtn");
+const transcribeBtn = $("transcribeBtn");
+const reactBtn = $("reactBtn");
+const finishBtn = $("finishBtn");
+const evaluateBtn = $("evaluateBtn");
+const apiKeyInput = $("apiKey");
+const statusEl = $("status");
+const timeEl = $("time");
+const transcriptPreview = $("transcriptPreview");
+const reactionText = $("reactionText");
+const reactionTime = $("reactionTime");
+const results = $("results");
+const exportJsonBtn = $("exportJsonBtn");
+const exportMdBtn = $("exportMdBtn");
+
+let videoHandle = null;
+let videoFile = null;
+let videoUrl = null;
+
+let transcript = [];
+let session = [];
+let currentReaction = null;
+
+let mediaRecorder = null;
+let reactionChunks = [];
+let reactionStartTime = null;
+
+// ---------- Video ----------
+
+openBtn.onclick = async () => {
+  try {
+    if ("showOpenFilePicker" in window) {
+      [videoHandle] = await window.showOpenFilePicker({
+        multiple: false,
+        types: [{
+          description: "Video",
+          accept: {
+            "video/*": [".mp4", ".webm", ".mov", ".mkv", ".m4v"]
+          }
+        }]
+      });
+      videoFile = await videoHandle.getFile();
+    } else {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "video/*";
+      input.onchange = async () => {
+        videoFile = input.files[0];
+        await loadVideo();
+      };
+      input.click();
+      return;
+    }
+
+    await loadVideo();
+  } catch (e) {
+    if (e.name !== "AbortError") setStatus("Could not open video: " + e.message);
+  }
+};
+
+async function loadVideo() {
+  if (!videoFile) return;
+
+  if (videoUrl) URL.revokeObjectURL(videoUrl);
+  videoUrl = URL.createObjectURL(videoFile);
+  video.src = videoUrl;
+  video.load();
+
+  transcript = [];
+  session = [];
+  currentReaction = null;
+  transcriptPreview.textContent = "Video loaded. Click Transcribe video.";
+  transcribeBtn.disabled = false;
+  reactBtn.disabled = true;
+  exportJsonBtn.disabled = true;
+  exportMdBtn.disabled = true;
+  setStatus("Loaded: " + videoFile.name);
+}
+
+video.ontimeupdate = updateTime;
+video.onloadedmetadata = updateTime;
+
+function updateTime() {
+  const current = video.currentTime || 0;
+  const duration = video.duration || 0;
+  timeEl.textContent = formatTime(current) + " / " + formatTime(duration);
+}
+
+function formatTime(seconds) {
+  if (!Number.isFinite(seconds)) return "00:00";
+  seconds = Math.floor(seconds);
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  return h
+    ? `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`
+    : `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+}
+
+function setStatus(text) {
+  statusEl.textContent = text;
+}
+
+// ---------- OpenAI helpers ----------
+
+function getKey() {
+  const key = apiKeyInput.value.trim();
+  if (!key) throw new Error("Enter your OpenAI API key first.");
+  return key;
+}
+
+async function openAITranscribe(blob, filename="audio.wav") {
+  const key = getKey();
+
+  const form = new FormData();
+  form.append("file", blob, filename);
+  form.append("model", "gpt-4o-transcribe");
+  form.append("response_format", "verbose_json");
+  form.append("timestamp_granularities[]", "segment");
+
+  const res = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${key}` },
+    body: form
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`OpenAI transcription failed (${res.status}): ${text}`);
+  }
+  return await res.json();
+}
+
+async function openAIReason(prompt) {
+  const key = getKey();
+
+  const res = await fetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${key}`
+    },
+    body: JSON.stringify({
+      model: "gpt-5.6",
+      input: prompt
+    })
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`OpenAI evaluation failed (${res.status}): ${text}`);
+  }
+
+  const data = await res.json();
+  return data.output_text || extractOutputText(data);
+}
+
+function extractOutputText(data) {
+  try {
+    return data.output
+      .flatMap(x => x.content || [])
+      .map(x => x.text || "")
+      .join("");
+  } catch {
+    return JSON.stringify(data);
+  }
+}
+
+// ---------- FFmpeg.wasm ----------
+
+let ffmpeg = null;
+
+async function ensureFFmpeg() {
+  if (ffmpeg) return ffmpeg;
+
+  setStatus("Loading FFmpeg.wasm...");
+  const { FFmpeg } = await import(
+    "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/esm/index.js"
+  );
+
+  ffmpeg = new FFmpeg();
+
+  ffmpeg.on("log", ({ message }) => {
+    if (message) console.debug("[ffmpeg]", message);
+  });
+
+  // The exact core URL can change with FFmpeg.wasm releases.
+  // This is kept isolated here so it is easy to update.
+  await ffmpeg.load({
+    coreURL: "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm/ffmpeg-core.js"
+  });
+
+  return ffmpeg;
+}
+
+transcribeBtn.onclick = async () => {
+  try {
+    transcribeBtn.disabled = true;
+    setStatus("Preparing audio extraction...");
+
+    const f = await ensureFFmpeg();
+
+    const inputName = "input" + getExtension(videoFile.name);
+    const outputName = "audio.wav";
+
+    await f.writeFile(inputName, await fetchFile(videoFile));
+
+    setStatus("Extracting audio...");
+    await f.exec([
+      "-i", inputName,
+      "-vn",
+      "-ac", "1",
+      "-ar", "16000",
+      "-c:a", "pcm_s16le",
+      outputName
+    ]);
+
+    const audioData = await f.readFile(outputName);
+    const audioBlob = new Blob([audioData.buffer], { type: "audio/wav" });
+
+    // For a production implementation, chunk this WAV before transcription.
+    setStatus("Sending audio to OpenAI for transcription...");
+
+    const data = await openAITranscribe(audioBlob, "audio.wav");
+
+    transcript = (data.segments || []).map(s => ({
+      start: Number(s.start),
+      end: Number(s.end),
+      text: s.text.trim()
+    }));
+
+    transcriptPreview.textContent =
+      transcript.length
+        ? transcript.map(s => `[${formatTime(s.start)}] ${s.text}`).join("\n")
+        : (data.text || "No transcript returned.");
+
+    reactBtn.disabled = false;
+    setStatus(`Transcript ready: ${transcript.length} timestamped segments.`);
+  } catch (e) {
+    console.error(e);
+    setStatus(e.message);
+  } finally {
+    transcribeBtn.disabled = false;
+  }
+};
+
+function getExtension(name) {
+  const m = name.match(/\\.[^.]+$/);
+  return m ? m[0] : ".mp4";
+}
+
+async function fetchFile(file) {
+  return new Uint8Array(await file.arrayBuffer());
+}
+
+// ---------- Reaction recording ----------
+
+reactBtn.onclick = async () => {
+  try {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      throw new Error("Microphone recording is not supported in this browser.");
+    }
+
+    if (!video.paused) video.pause();
+
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    reactionChunks = [];
+    reactionStartTime = video.currentTime;
+
+    mediaRecorder = new MediaRecorder(stream);
+    mediaRecorder.ondataavailable = e => {
+      if (e.data.size) reactionChunks.push(e.data);
+    };
+
+    mediaRecorder.onstop = async () => {
+      stream.getTracks().forEach(t => t.stop());
+
+      const blob = new Blob(reactionChunks, {
+        type: mediaRecorder.mimeType || "audio/webm"
+      });
+
+      try {
+        setStatus("Transcribing reaction...");
+        const data = await openAITranscribe(blob, "reaction.webm");
+        reactionText.value = data.text || "";
+        currentReaction = {
+          timestamp: reactionStartTime,
+          text: data.text || ""
+        };
+        reactionTime.textContent =
+          `Reaction at ${formatTime(reactionStartTime)}`;
+        evaluateBtn.disabled = !currentReaction.text.trim();
+        setStatus("Reaction transcribed.");
+      } catch (e) {
+        setStatus(e.message);
+      }
+    };
+
+    mediaRecorder.start();
+    reactBtn.disabled = true;
+    finishBtn.disabled = false;
+    reactionTime.textContent =
+      `Recording from ${formatTime(reactionStartTime)}...`;
+    setStatus("Recording reaction...");
+  } catch (e) {
+    setStatus(e.message);
+  }
+};
+
+finishBtn.onclick = () => {
+  if (mediaRecorder && mediaRecorder.state !== "inactive") {
+    mediaRecorder.stop();
+  }
+  reactBtn.disabled = false;
+  finishBtn.disabled = true;
+};
+
+// Allow editing the transcription manually.
+reactionText.oninput = () => {
+  if (currentReaction) currentReaction.text = reactionText.value;
+  evaluateBtn.disabled = !reactionText.value.trim();
+};
+
+// ---------- Evaluation ----------
+
+evaluateBtn.onclick = async () => {
+  if (!currentReaction) return;
+
+  try {
+    evaluateBtn.disabled = true;
+
+    const t = currentReaction.timestamp;
+
+    const transcriptSoFar = transcript
+      .filter(s => s.end <= t)
+      .map(s => `[${formatTime(s.start)}-${formatTime(s.end)}] ${s.text}`)
+      .join("\n");
+
+    const prompt = `
+You are evaluating a learner's comprehension of a video.
+
+IMPORTANT:
+Only use the transcript that occurred BEFORE or AT the learner's pause timestamp.
+Do not use information from later in the video.
+Do not reward claims that depend on future information.
+
+PAUSE TIMESTAMP:
+${formatTime(t)}
+
+TRANSCRIPT SO FAR:
+${transcriptSoFar || "(No transcript segments available before the pause.)"}
+
+LEARNER REACTION:
+${currentReaction.text}
+
+Evaluate the reaction.
+
+Return:
+1. Overall score out of 100
+2. Factual accuracy
+3. Understanding/comprehension
+4. Coverage of important points
+5. Unsupported inference
+6. Incorrect claims
+7. Important points missed
+8. A concise explanation
+9. A better summary of what had been said so far
+
+Be precise and distinguish between:
+- something explicitly stated
+- something reasonably inferred
+- something unsupported
+- something that has not yet been established.
+
+Do not penalize the learner for not knowing information that occurs after the pause.
+`;
+
+    setStatus("Evaluating reaction...");
+    const feedback = await openAIReason(prompt);
+
+    const entry = {
+      timestamp: t,
+      reaction: currentReaction.text,
+      evaluation: feedback
+    };
+
+    session.push(entry);
+    results.innerHTML = `
+      <div class="score">${extractScore(feedback)}</div>
+      <pre>${escapeHtml(feedback)}</pre>
+    `;
+
+    exportJsonBtn.disabled = false;
+    exportMdBtn.disabled = false;
+    setStatus("Evaluation complete.");
+  } catch (e) {
+    console.error(e);
+    setStatus(e.message);
+  } finally {
+    evaluateBtn.disabled = false;
+  }
+};
+
+function extractScore(text) {
+  const m = text.match(/(?:overall score|score)[^0-9]{0,30}(\\d{1,3})\\s*(?:\\/\\s*100)?/i);
+  return m ? `${m[1]}/100` : "Evaluation";
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+  }[c]));
+}
+
+// ---------- Export ----------
+
+function sessionData() {
+  return {
+    video: {
+      name: videoFile?.name || null,
+      duration: video.duration || null
+    },
+    transcript,
+    reactions: session
+  };
+}
+
+function download(text, filename, type) {
+  const blob = new Blob([text], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+exportJsonBtn.onclick = () => {
+  download(
+    JSON.stringify(sessionData(), null, 2),
+    "reaction-session.json",
+    "application/json"
+  );
+};
+
+exportMdBtn.onclick = () => {
+  const d = sessionData();
+
+  let md = `# Reaction Learning Session\n\n`;
+  md += `**Video:** ${d.video.name || "Unknown"}\n\n`;
+  md += `## Transcript\n\n`;
+
+  for (const s of d.transcript) {
+    md += `**${formatTime(s.start)}** ${s.text}\n\n`;
+  }
+
+  md += `## Reactions\n\n`;
+
+  d.reactions.forEach((r, i) => {
+    md += `### Reaction ${i + 1} — ${formatTime(r.timestamp)}\n\n`;
+    md += `**Learner:** ${r.reaction}\n\n`;
+    md += `**Evaluation:**\n\n${r.evaluation}\n\n`;
+  });
+
+  download(md, "reaction-session.md", "text/markdown");
+};
+
+// Keyboard shortcut: R starts reaction when not typing.
+document.addEventListener("keydown", e => {
+  const tag = document.activeElement?.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA") return;
+
+  if (e.key.toLowerCase() === "r" && !reactBtn.disabled) {
+    reactBtn.click();
+  }
+});
+</script>
+</body>
+</html>
