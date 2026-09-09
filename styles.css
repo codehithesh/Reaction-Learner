@@ -59,8 +59,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 
 /* ---------- pane header (reader pane’s own top row — no full-width nav bar) ---------- */
 .pane-head {
-  flex: 0 0 auto; display: flex; align-items: center; gap: 8px;
-  height: 40px; padding: 0 12px; box-sizing: border-box;
+  flex: 0 0 auto; display: flex; align-items: center; gap: 12px;
+  height: 48px; padding: 0 16px; box-sizing: border-box;
   background: var(--panel); border-bottom: 1px solid var(--border);
 }
 .brand { font-weight: 650; font-size: 14px; letter-spacing: 0.01em; white-space: nowrap; }
@@ -102,7 +102,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .seg-btn.active { background: var(--accent); color: #fff; font-weight: 500; }
 .seg-btn:not(.active):hover { background: var(--border); color: var(--text); }
 
-label { font-size: 11px; font-weight: 600; color: var(--text-dim); margin-top: 8px; display: block; }
+label { font-size: 11px; font-weight: 600; color: var(--text-dim); margin-top: 10px; display: block; }
 input[type="password"], select, textarea {
   width: 100%; background: var(--panel);
   border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 13px;
@@ -130,13 +130,13 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--a
   background: var(--bg);
 }
 .reader-toolbar {
-  flex: 0 0 auto; display: flex; align-items: center; gap: 8px;
-  padding: 6px 12px; border-bottom: 1px solid var(--border); background: var(--bg);
+  flex: 0 0 auto; display: flex; align-items: center; gap: 10px;
+  padding: 7px 16px; border-bottom: 1px solid var(--border); background: var(--bg);
 }
 #read-pos { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .speech-bar {
-  flex: 0 0 auto; display: flex; align-items: center; gap: 8px;
-  padding: 5px 12px; border-bottom: 1px solid var(--border); background: var(--panel);
+  flex: 0 0 auto; display: flex; align-items: center; gap: 10px;
+  padding: 7px 16px; border-bottom: 1px solid var(--border); background: var(--panel);
 }
 .speech-bar select { width: auto; }
 #voice-select { flex: 1; min-width: 0; }
@@ -171,9 +171,9 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--a
   border-left: 1px solid var(--border); background: var(--bg);
 }
 .activity-head {
-  flex: 0 0 auto; height: 40px; padding: 0 12px 0 16px; box-sizing: border-box;
+  flex: 0 0 auto; height: 48px; padding: 0 16px; box-sizing: border-box;
   background: var(--panel); border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; gap: 8px;
+  display: flex; align-items: center; gap: 12px;
 }
 .activity-head .head-title {
   font-size: 14px; font-weight: 650; color: var(--text);
@@ -224,10 +224,10 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--a
 /* composer */
 .composer {
   flex: 0 0 auto; border-top: 1px solid var(--border); background: var(--panel);
-  padding: 8px 14px 10px; display: flex; flex-direction: column; gap: 6px;
+  padding: 10px 14px 12px; display: flex; flex-direction: column; gap: 10px;
 }
 #react-hint { font-size: 11.5px; }
-.composer-btns { display: flex; gap: 8px; align-items: center; }
+.composer-btns { display: flex; gap: 10px; align-items: center; }
 /* export picker next to the mic — looks like a button, opens the OS dropdown */
 .export-select {
   width: auto; height: 34px; cursor: pointer;
@@ -260,7 +260,7 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--a
 /* modal header — fixed nav bar, same as the app panes’ 40px header */
 .modal-head {
   flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between;
-  height: 40px; padding: 0 12px 0 16px; box-sizing: border-box;
+  height: 48px; padding: 0 14px 0 20px; box-sizing: border-box;
   background: var(--panel); border-bottom: 1px solid var(--border);
 }
 .modal-head h3 {
@@ -289,7 +289,7 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--a
   margin-left: auto;
 }
 .appearance-row .seg-btn { font-size: 12px; padding: 0 4px; white-space: nowrap; }
-.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
 
 /* provider cards — stacked, one after another */
 #provider-list { display: flex; flex-direction: column; gap: 16px; }
