@@ -809,7 +809,7 @@ function updateControls() {
   } else if (state.busyEval) {
     els.reactHint.textContent = 'Evaluating your reaction…';
   } else {
-    els.reactHint.textContent = 'Click a paragraph to set your spot, then press “✍ React here”.';
+    els.reactHint.textContent = 'Click a paragraph to set your spot, then press "✍ React here."';
   }
 }
 
