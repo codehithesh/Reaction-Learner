@@ -9,18 +9,16 @@
 <body>
 <div class="app">
 
-  <!-- ===================== TOP BAR ===================== -->
-  <header class="topbar">
-    <span class="brand">Reaction Learner</span>
-    <div class="spacer"></div>
-    <button id="btn-settings" class="btn compact" title="Settings">⚙ Settings</button>
-  </header>
-
-  <!-- ===================== HORIZONTAL SPLIT ===================== -->
+  <!-- ===================== TRUE SPLIT: both panes run the full height ===================== -->
   <div class="split">
 
-    <!-- reader: the extracted script + speech controls -->
+    <!-- reader pane: own header, toolbar, speech, text -->
     <section class="reader-col">
+      <div class="pane-head">
+        <span class="brand">Reaction Learner</span>
+        <div class="spacer"></div>
+        <button id="btn-settings" class="btn compact" title="Settings">⚙ Settings</button>
+      </div>
       <div class="reader-toolbar">
         <button id="btn-source" class="btn" title="Paste text to study">✎ Add Text</button>
         <span class="vsep"></span>
