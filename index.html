@@ -22,7 +22,7 @@
     <!-- reader: the extracted script + speech controls -->
     <section class="reader-col">
       <div class="reader-toolbar">
-        <button id="btn-source" class="btn" title="Paste text to study">✎ Text source</button>
+        <button id="btn-source" class="btn" title="Paste text to study">✎ Add Text</button>
         <span class="vsep"></span>
         <span id="read-pos" class="dim"></span>
         <div class="spacer"></div>
@@ -45,15 +45,16 @@
       </div>
       <div id="reading" class="reading">
         <div class="empty-state">
-          No text loaded. Press <b>✎ Text source</b> to paste text,<br>
+          No text loaded. Press <b>✎ Add Text</b> to paste text,<br>
           or click the extension’s <b>toolbar icon while on a webpage</b> to load that page’s text.
         </div>
       </div>
-      <button id="btn-activity" class="activity-fab" title="Open activity">💬 Activity <span class="fab-count" id="activity-count">0</span></button>
+      <button id="btn-activity" class="activity-fab" title="Open / close activity">💬 Activity</button>
     </section>
 
     <!-- activity: reactions + evaluations + composer -->
     <section class="activity-col" id="activity-col">
+      <div id="activity-resizer" class="activity-resizer" title="Drag to resize"></div>
       <div class="activity-head">
         <span>Activity</span>
         <div class="spacer"></div>

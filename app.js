@@ -23,6 +23,8 @@ const state = {
   reactions: [],      // { id, text, mode, atParagraph, sliceText, truncated, sliceNote, sliceChars, ts }
   evals: [],          // { reactionId, provider, model, ok, error, result, raw }
   provider: 'openai',
+  activityOpen: true,  // right-side activity panel visibility
+  panelW: 0,           // desktop activity panel width in px
   busyEval: false,
   voiceTyped: false,  // reaction text came from the mic
   listening: false,
@@ -45,7 +47,7 @@ const els = {
   reactText: $('react-text'), btnMic: $('btn-mic'), btnSend: $('btn-send'),
   // mobile activity overlay
   activityCol: $('activity-col'), btnActivity: $('btn-activity'),
-  btnCloseActivity: $('btn-close-activity'), activityCount: $('activity-count'),
+  btnCloseActivity: $('btn-close-activity'), resizer: $('activity-resizer'),
   // modals
   sourceModal: $('source-modal'), settingsModal: $('settings-modal'),
   pasteText: $('paste-text'), loadPaste: $('load-paste'),
@@ -100,17 +102,68 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// mobile: activity collapses into a full-screen panel
-function openActivity() {
-  els.activityCol.classList.add('open');
-  scrollBottom(els.activity);
+// ---------- activity panel: collapsible (FAB toggle), resizable on desktop ----------
+function setActivityOpen(open) {
+  state.activityOpen = open;
+  document.body.classList.toggle('activity-closed', !open);
+  els.activityCol.classList.toggle('open', open);
+  if (open) {
+    scrollBottom(els.activity);
+  } else if (recognition && state.listening) {
+    recognition.stop();
+    endListening();
+  }
 }
-function closeActivity() {
-  els.activityCol.classList.remove('open');
-  if (recognition && state.listening) { recognition.stop(); endListening(); }
-}
-els.btnActivity.addEventListener('click', openActivity);
+function openActivity() { setActivityOpen(true); }
+function closeActivity() { setActivityOpen(false); }
+function toggleActivity() { setActivityOpen(!state.activityOpen); }
+els.btnActivity.addEventListener('click', toggleActivity);
 els.btnCloseActivity.addEventListener('click', closeActivity);
+
+// drag the divider between reader and activity to resize the panel
+function clampPanelW(w) {
+  const maxW = Math.round(window.innerWidth * 0.7);
+  return Math.min(Math.max(Math.round(w), 280), maxW);
+}
+function applyPanelW(w) {
+  state.panelW = clampPanelW(w);
+  document.documentElement.style.setProperty('--panel-w', state.panelW + 'px');
+}
+let dragW = null;
+function onResizeMove(e) {
+  if (!dragW) return;
+  applyPanelW(dragW.startW + (dragW.startX - e.clientX));
+}
+function onResizeUp() {
+  dragW = null;
+  document.body.classList.remove('activity-resizing');
+  document.removeEventListener('pointermove', onResizeMove);
+}
+els.resizer.addEventListener('pointerdown', (e) => {
+  if (window.innerWidth <= 1000) return;
+  e.preventDefault();
+  dragW = { startX: e.clientX, startW: state.panelW || 400 };
+  document.body.classList.add('activity-resizing');
+  document.addEventListener('pointermove', onResizeMove);
+  document.addEventListener('pointerup', onResizeUp, { once: true });
+});
+
+function initActivityPanel() {
+  if (window.innerWidth > 1000) {
+    // desktop: panel open by default, width ~38% of the window
+    applyPanelW(Math.min(Math.max(Math.round(window.innerWidth * 0.38), 360), 560));
+  } else {
+    // mobile: collapsed — the FAB opens the full-screen sheet
+    setActivityOpen(false);
+  }
+}
+window.addEventListener('resize', () => {
+  if (window.innerWidth <= 1000) {
+    if (state.activityOpen) setActivityOpen(false); // side panel doesn't exist here
+  } else {
+    if (!state.panelW) initActivityPanel();
+  }
+});
 
 // ============================================================
 // SETTINGS: theme + provider cards
@@ -383,7 +436,7 @@ async function consumePendingGrab() {
         loadSource(pendingGrab.text, pendingGrab.title || '', pendingGrab.url || '');
         setStatus('Loaded text from the page you opened this from', 'success');
       } else {
-        setStatus('Nothing readable was found on that page — use “✎ Text source” to paste instead.', 'error');
+        setStatus('Nothing readable was found on that page — use “✎ Add Text” to paste instead.', 'error');
       }
     } else if (pendingGrab) {
       chrome.storage.session.remove('pendingGrab'); // stale token
@@ -750,7 +803,6 @@ function updateControls() {
   els.btnSend.disabled = !canCompose || !els.reactText.value.trim();
 
   els.exportSelect.disabled = state.reactions.length === 0;
-  els.activityCount.textContent = String(state.reactions.length);
 
   if (state.pending) {
     els.reactHint.textContent = `Reacting at ¶ ${state.pending.markerP + 1} — everything up to it is the evaluated context.`;
@@ -1142,6 +1194,7 @@ els.exportSelect.addEventListener('change', () => {
 // ============================================================
 renderTheme();
 renderProviderCards();
+initActivityPanel();
 consumePendingGrab();
 loadSavedKeys();
 updateControls();

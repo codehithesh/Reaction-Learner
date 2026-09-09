@@ -44,11 +44,11 @@ icons/          16/48/128 placeholder icons
 2. Enable **Developer mode** (top-right)
 3. **Load unpacked** → select this folder
 4. Click the Reaction Learner toolbar icon on any webpage, or open
-   `index.html` inside the extension and press **✎ Text source** to paste text
+   `index.html` inside the extension and press **✎ Add Text** to paste text
 
 ## How to use
 
-1. **Load text** — press **✎ Text source** and paste it, or click the extension's
+1. **Load text** — press **✎ Add Text** and paste it, or click the extension's
    toolbar icon on a webpage to load its readable text automatically.
 2. **Read** — optionally hit **▶ Read** in the reader bar for native read-aloud
    (pick an OS voice). The marker advances as it reads.
