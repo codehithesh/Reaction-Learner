@@ -404,7 +404,7 @@ async function loadSavedKeys() {
     }
     if (any) {
       updateForgetBtn();
-      setStatus('Saved API keys restored — open ⚙ Settings to review or erase them', 'success');
+      setStatus('Saved API keys restored — open Settings to review or erase them', 'success');
     }
   } catch { /* ignore */ }
 }
@@ -436,7 +436,7 @@ async function consumePendingGrab() {
         loadSource(pendingGrab.text, pendingGrab.title || '', pendingGrab.url || '');
         setStatus('Loaded text from the page you opened this from', 'success');
       } else {
-        setStatus('Nothing readable was found on that page — use “✎ Add Text” to paste instead.', 'error');
+        setStatus('Nothing readable was found on that page — use “Add Text” to paste instead.', 'error');
       }
     } else if (pendingGrab) {
       chrome.storage.session.remove('pendingGrab'); // stale token
@@ -580,6 +580,12 @@ function activeVoice() {
   return synth.getVoices().find((v) => v.name === name) || null;
 }
 
+// pause button keeps its icon while the label swaps between Pause / Resume
+function setPauseBtn(label) {
+  const ic = label === 'Resume' ? 'play' : 'pause';
+  els.btnPause.innerHTML = `<span class="ic ic-${ic}" aria-hidden="true"></span>${label}`;
+}
+
 function readAloudFrom(startP) {
   if (!synth || !state.paras.length) return;
   if (startP < 0 || startP >= state.paras.length) {
@@ -592,7 +598,7 @@ function readAloudFrom(startP) {
   state.tts.idx = startP;
   els.btnPause.disabled = false;
   els.btnStop.disabled = false;
-  els.btnPause.textContent = '⏸ Pause';
+  setPauseBtn('Pause');
   setStatus('Reading aloud — native speech, nothing uploaded');
   renderReadingState();
   speakNext();
@@ -640,7 +646,7 @@ function stopTTS(finished) {
   state.tts.paused = false;
   state.tts.idx = -1;
   state.tts.utter = null;
-  els.btnPause.textContent = '⏸ Pause';
+  setPauseBtn('Pause');
   els.btnPause.disabled = true;
   els.btnStop.disabled = true;
   if (wasActive && !finished) setStatus('Stopped reading');
@@ -663,12 +669,12 @@ els.btnPause.addEventListener('click', () => {
   if (state.tts.paused) {
     synth.resume();
     state.tts.paused = false;
-    els.btnPause.textContent = '⏸ Pause';
+    setPauseBtn('Pause');
     setStatus('Reading…');
   } else {
     synth.pause();
     state.tts.paused = true;
-    els.btnPause.textContent = '▶ Resume';
+    setPauseBtn('Resume');
     setStatus('Paused — react here if you like');
   }
 });
@@ -753,7 +759,7 @@ els.btnSend.addEventListener('click', async () => {
   const prov = activeProvider();
   if (!prov.key) {
     setApiError(`Enter your ${prov.label} API key to evaluate`);
-    setStatus('API key required for evaluation — open ⚙ Settings', 'error');
+    setStatus('API key required for evaluation — open Settings', 'error');
     return;
   }
 
@@ -809,7 +815,7 @@ function updateControls() {
   } else if (state.busyEval) {
     els.reactHint.textContent = 'Evaluating your reaction…';
   } else {
-    els.reactHint.textContent = 'Click a paragraph to set your spot, then press "✍ React here."';
+    els.reactHint.textContent = 'Click a paragraph to set your spot, then press "React here."';
   }
 }
 

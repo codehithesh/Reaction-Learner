@@ -93,11 +93,30 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .btn.compact { height: 34px; padding: 0 10px; font-size: 12.5px; border-radius: 6px; }
 .btn.icon { height: 34px; padding: 0 8px; font-size: 13px; }
 
+/* ---------- icon glyphs: single-color SVG files tinted via mask ---------- */
+.ic {
+  display: inline-block; width: 16px; height: 16px; flex: none;
+  background-color: currentColor;
+  -webkit-mask: var(--icon) center / contain no-repeat;
+          mask: var(--icon) center / contain no-repeat;
+}
+.ic-gear     { --icon: url('icons/gear.svg'); }
+.ic-msg      { --icon: url('icons/message.svg'); }
+.ic-file-add { --icon: url('icons/file-add.svg'); }
+.ic-pen      { --icon: url('icons/pen.svg'); }
+.ic-sun      { --icon: url('icons/sun.svg'); }
+.ic-moon     { --icon: url('icons/moon.svg'); }
+.ic-monitor  { --icon: url('icons/monitor.svg'); }
+.ic-trash    { --icon: url('icons/trash.svg'); }
+.ic-play     { --icon: url('icons/play.svg'); }
+.ic-pause    { --icon: url('icons/pause.svg'); }
+.ic-stop     { --icon: url('icons/stop.svg'); }
+
 .seg { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; width: 100%; }
 .seg-btn {
   flex: 1; height: 34px; padding: 0 6px; background: var(--panel); color: var(--text-dim);
   border: none; cursor: pointer; font-size: 13px;
-  display: flex; align-items: center; justify-content: center;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
 }
 .seg-btn.active { background: var(--accent); color: #fff; font-weight: 500; }
 .seg-btn:not(.active):hover { background: var(--border); color: var(--text); }

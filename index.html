@@ -17,14 +17,14 @@
       <div class="pane-head">
         <span class="brand">Reaction Learner</span>
         <div class="spacer"></div>
-        <button id="btn-settings" class="btn compact" title="Settings">⚙ Settings</button>
+        <button id="btn-settings" class="btn compact" title="Settings"><span class="ic ic-gear" aria-hidden="true"></span>Settings</button>
       </div>
       <div class="reader-toolbar">
-        <button id="btn-source" class="btn" title="Paste text to study">✎ Add Text</button>
+        <button id="btn-source" class="btn" title="Paste text to study"><span class="ic ic-file-add" aria-hidden="true"></span>Add Text</button>
         <span class="vsep"></span>
         <span id="read-pos" class="dim"></span>
         <div class="spacer"></div>
-        <button id="btn-react" class="btn primary" disabled>✍ React here</button>
+        <button id="btn-react" class="btn primary" disabled><span class="ic ic-pen" aria-hidden="true"></span>React here</button>
       </div>
       <div class="speech-bar">
         <span class="mini-label">Read aloud</span>
@@ -37,17 +37,17 @@
           <option value="1.5">1.5×</option>
           <option value="2">2×</option>
         </select>
-        <button id="btn-read" class="btn compact">▶ Read</button>
-        <button id="btn-pause" class="btn compact" disabled>⏸ Pause</button>
-        <button id="btn-stop" class="btn compact" disabled>⏹ Stop</button>
+        <button id="btn-read" class="btn compact"><span class="ic ic-play" aria-hidden="true"></span>Read</button>
+        <button id="btn-pause" class="btn compact" disabled><span class="ic ic-pause" aria-hidden="true"></span>Pause</button>
+        <button id="btn-stop" class="btn compact" disabled><span class="ic ic-stop" aria-hidden="true"></span>Stop</button>
       </div>
       <div id="reading" class="reading">
         <div class="empty-state">
-          No text loaded. Press <b>✎ Add Text</b> to paste text,<br>
+          No text loaded. Press <b>Add Text</b> to paste text,<br>
           or click the extension’s <b>toolbar icon while on a webpage</b> to load that page’s text.
         </div>
       </div>
-      <button id="btn-activity" class="activity-fab" title="Open / close activity">💬 Activity</button>
+      <button id="btn-activity" class="activity-fab" title="Open / close activity"><span class="ic ic-msg" aria-hidden="true"></span>Activity</button>
     </section>
 
     <!-- activity: reactions + evaluations + composer -->
@@ -59,15 +59,15 @@
         <button id="btn-close-activity" class="btn compact" title="Close activity">✕</button>
       </div>
       <div id="activity" class="activity">
-        <div class="empty-state">Click a paragraph to set your spot, press <b>✍ React here</b>, and your reactions + AI evaluations will appear here.</div>
+        <div class="empty-state">Click a paragraph to set your spot, press <b>React here</b>, and your reactions + AI evaluations will appear here.</div>
       </div>
       <div class="composer">
-        <div id="react-hint" class="dim">Click a paragraph, then press <b>✍ React here</b>.</div>
+        <div id="react-hint" class="dim">Click a paragraph, then press <b>React here</b>.</div>
         <textarea id="react-text" rows="2" placeholder="Type your reaction here or click the mic and just say it…" disabled></textarea>
         <div class="composer-btns">
           <button id="btn-mic" class="btn" disabled title="Native speech-to-text"><span class="record-dot"></span>Mic</button>
           <select id="export-select" class="export-select" disabled title="Export this session">
-            <option value="" selected disabled>⬇ Export</option>
+            <option value="" selected disabled>Export</option>
             <option value="json">JSON</option>
             <option value="markdown">Markdown</option>
           </select>
@@ -112,9 +112,9 @@
       <div class="appearance-row">
         <h4 class="modal-label appearance-label">Appearance</h4>
         <div class="seg">
-          <button id="theme-system" class="seg-btn active">🖥 System</button>
-          <button id="theme-light" class="seg-btn">☀ Light</button>
-          <button id="theme-dark" class="seg-btn">🌙 Dark</button>
+          <button id="theme-system" class="seg-btn active"><span class="ic ic-monitor" aria-hidden="true"></span>System</button>
+          <button id="theme-light" class="seg-btn"><span class="ic ic-sun" aria-hidden="true"></span>Light</button>
+          <button id="theme-dark" class="seg-btn"><span class="ic ic-moon" aria-hidden="true"></span>Dark</button>
         </div>
       </div>
 
@@ -124,7 +124,7 @@
       <div id="provider-list"></div>
 
       <div class="forget-row">
-        <button id="btn-forget-keys" class="btn compact" disabled>🗑 Forget saved keys</button>
+        <button id="btn-forget-keys" class="btn compact" disabled><span class="ic ic-trash" aria-hidden="true"></span>Forget saved keys</button>
         <span class="hint">Erases any saved keys from this browser.</span>
       </div>
 
