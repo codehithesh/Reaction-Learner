@@ -1,6 +1,8 @@
 // ============================================================
 // Reaction Learner — text-based Chrome extension app
-// Zero persistence: everything lives in this page's memory.
+// Session data never persists: everything lives in this page's memory.
+// BYOK API keys may optionally be saved to chrome.storage.local —
+// extension-private, browser-local — and are erased on request.
 // Speech = native Web Speech APIs (no transcription service).
 // Eval = BYOK OpenAI or DeepSeek reasoning model (settings modal).
 // ============================================================
@@ -31,10 +33,10 @@ const state = {
 // ---------- DOM ----------
 const $ = (id) => document.getElementById(id);
 const els = {
-  statusLine: $('status-line'),
+  toast: $('toast'),
   btnSettings: $('btn-settings'),
   exportJson: $('export-json'), exportMd: $('export-md'),
-  btnSource: $('btn-source'), btnGrabNow: $('btn-grab-now'),
+  btnSource: $('btn-source'),
   readPos: $('read-pos'), btnReact: $('btn-react'),
   voiceSelect: $('voice-select'), rateSelect: $('rate-select'),
   btnRead: $('btn-read'), btnPause: $('btn-pause'), btnStop: $('btn-stop'),
@@ -51,6 +53,7 @@ const els = {
   keyOai: $('key-oai'), keyDs: $('key-ds'),
   modelOai: $('model-oai'), modelDs: $('model-ds'),
   apiError: $('api-error'),
+  btnForgetKeys: $('btn-forget-keys'),
 };
 
 // ---------- helpers ----------
@@ -58,9 +61,15 @@ function escapeHtml(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
+// Toast messages — bottom-right, auto-hide after a few seconds.
+let toastTimer = null;
 function setStatus(msg, kind) {
-  els.statusLine.textContent = msg || '';
-  els.statusLine.className = kind === 'error' ? 'error' : kind === 'success' ? 'success' : '';
+  els.toast.textContent = msg || '';
+  els.toast.className = 'toast' + (kind === 'error' ? ' error' : kind === 'success' ? ' success' : '');
+  if (!msg) { els.toast.classList.add('hidden'); return; }
+  els.toast.classList.remove('hidden');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => els.toast.classList.add('hidden'), kind === 'error' ? 6000 : 3200);
 }
 function setApiError(msg) { els.apiError.textContent = msg || ''; }
 function fmtCount(n) { return n >= 1000 ? (n / 1000).toFixed(1) + 'k' : String(n); }
@@ -129,12 +138,77 @@ function setProvider(prov) {
   });
   setApiError('');
 }
-[els.keyOai, els.keyDs].forEach((el) => el.addEventListener('input', () => setApiError('')));
+[els.keyOai, els.keyDs].forEach((el) => el.addEventListener('input', () => {
+  setApiError('');
+  updateForgetBtn();
+  scheduleKeySave();
+}));
 
 function activeProvider() {
   const key = state.provider === 'openai' ? els.keyOai.value.trim() : els.keyDs.value.trim();
   const model = state.provider === 'openai' ? els.modelOai.value : els.modelDs.value;
   return { name: state.provider, key, model };
+}
+
+// ============================================================
+// KEY PERSISTENCE — extension-private chrome.storage.local
+// ============================================================
+// Keys you type are saved here (debounced), survive browser restarts,
+// and are deleted completely by “Forget saved keys”. Not encrypted on
+// purpose: this storage area is already private to the extension — a
+// stored encryption key would protect against nothing extra.
+let saveKeysTimer = null;
+
+function updateForgetBtn() {
+  const anyTyped = !!(els.keyOai.value.trim() || els.keyDs.value.trim());
+  els.btnForgetKeys.disabled = !anyTyped;
+}
+
+function scheduleKeySave() {
+  if (!isExt) return;
+  clearTimeout(saveKeysTimer);
+  saveKeysTimer = setTimeout(persistKeys, 400);
+}
+
+async function persistKeys() {
+  if (!isExt) return;
+  const keys = {};
+  const oai = els.keyOai.value.trim();
+  const ds = els.keyDs.value.trim();
+  if (oai) keys.openai = oai;
+  if (ds) keys.deepseek = ds;
+  try {
+    if (Object.keys(keys).length) await chrome.storage.local.set({ rlApiKeys: keys });
+    else await chrome.storage.local.remove('rlApiKeys'); // emptied → gone for good
+  } catch { /* storage unavailable — stay in-memory only */ }
+  updateForgetBtn();
+}
+
+async function forgetKeys() {
+  clearTimeout(saveKeysTimer);
+  els.keyOai.value = '';
+  els.keyDs.value = '';
+  setApiError('');
+  updateForgetBtn();
+  if (isExt) {
+    try { await chrome.storage.local.remove('rlApiKeys'); } catch { /* ignore */ }
+  }
+  setStatus('Saved API keys erased from this browser', 'success');
+}
+els.btnForgetKeys.addEventListener('click', forgetKeys);
+
+async function loadSavedKeys() {
+  if (!isExt) return;
+  try {
+    const { rlApiKeys } = await chrome.storage.local.get('rlApiKeys');
+    if (!rlApiKeys) return;
+    if (rlApiKeys.openai) els.keyOai.value = rlApiKeys.openai;
+    if (rlApiKeys.deepseek) els.keyDs.value = rlApiKeys.deepseek;
+    if (rlApiKeys.openai || rlApiKeys.deepseek) {
+      updateForgetBtn();
+      setStatus('Saved API keys restored — open ⚙ Settings to review or erase them', 'success');
+    }
+  } catch { /* ignore */ }
 }
 
 // ============================================================
@@ -151,29 +225,6 @@ els.loadPaste.addEventListener('click', () => {
   loadSource(text, 'Pasted text', '');
   closeModal(els.sourceModal);
 });
-
-async function grabActiveTab() {
-  if (!isExt) { setStatus('Open this as a Chrome extension to grab pages', 'error'); return; }
-  setStatus('Grabbing current tab text…');
-  try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tab || !/^https?:|^file:/.test(tab.url || '')) throw new Error('no web page active');
-    const results = await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      func: () => {
-        const pick = (el) => (el && el.innerText ? el.innerText : '');
-        const root = document.querySelector('article') || document.querySelector('main') || document.body;
-        return { title: document.title || '', url: location.href || '', text: pick(root) };
-      },
-    });
-    const r = results && results[0] && results[0].result;
-    if (!r || !r.text || !r.text.trim()) throw new Error('no readable text found');
-    loadSource(r.text, r.title, r.url);
-  } catch (err) {
-    setStatus('Could not grab: ' + (err.message || err) + ' — click the toolbar icon while on the page instead.', 'error');
-  }
-}
-els.btnGrabNow.addEventListener('click', grabActiveTab);
 
 async function consumePendingGrab() {
   if (!isExt) return;
@@ -220,23 +271,25 @@ function loadSource(text, title, url) {
 
 function segmentText(text) {
   const clean = text.replace(/\r\n/g, '\n').replace(/\u00a0/g, ' ').trim();
-  const blocks = clean.split(/\n{2,}/);
+  // Preserve the author's structure: every line break starts a new paragraph,
+  // so single-newline-separated paragraphs are never merged into one wall of text.
+  const lines = clean.split(/\n+/).map((s) => s.trim()).filter(Boolean);
   const out = [];
-  for (let b of blocks) {
-    b = b.replace(/\n+/g, ' ').trim();
-    if (!b) continue;
-    if (b.length <= 1400) { out.push({ text: b }); continue; }
-    const sentences = b.match(/[^.!?]+[.!?]+["')\]]*|[^.!?]+$/g) || [b];
+  for (const line of lines) {
+    if (line.length <= 2200) { out.push({ text: line }); continue; }
+    // Exceptionally long single-line paragraphs are split at sentence boundaries
+    // so marking and read-aloud stay reliable.
+    const sentences = line.match(/[^.!?]+[.!?]+["')\]]*|[^.!?]+$/g) || [line];
     let cur = '';
     for (const s of sentences) {
       const piece = s.trim();
       if (!piece) continue;
-      if ((cur + ' ' + piece).length > 1400 && cur) { out.push({ text: cur }); cur = piece; }
+      if ((cur + ' ' + piece).length > 1600 && cur) { out.push({ text: cur }); cur = piece; }
       else cur = cur ? cur + ' ' + piece : piece;
     }
     if (cur) out.push({ text: cur });
   }
-  return out.length ? out : [{ text: text.trim() }];
+  return out.length ? out : [{ text: clean }];
 }
 
 // ---------- reading pane + marker ----------
@@ -280,15 +333,15 @@ function renderReadingState() {
 }
 
 function updateReadPos() {
-  if (!state.paras.length) { els.readPos.textContent = 'No text loaded'; return; }
+  if (!state.paras.length) { els.readPos.textContent = ''; return; }
   if (state.markerP < 0) {
-    els.readPos.textContent = `0 / ${state.paras.length} paragraphs read — click the paragraph you’ve read up to`;
+    els.readPos.textContent = `0 / ${state.paras.length} paragraphs — click a paragraph to set your spot`;
     return;
   }
   const chars = state.prefixLen[state.markerP] || 0;
   const pct = state.totalChars ? chars / state.totalChars : 0;
   els.readPos.textContent =
-    `Marked ¶ ${state.markerP + 1} of ${state.paras.length} · ${fmtCount(chars)} chars · ${fmtPct(pct)} of text`;
+    `At ¶ ${state.markerP + 1} of ${state.paras.length} · ${fmtCount(chars)} chars · ${fmtPct(pct)} of text`;
 }
 
 // ============================================================
@@ -398,11 +451,12 @@ function stopTTS(finished) {
 
 els.btnRead.addEventListener('click', () => {
   if (!synth || !state.paras.length) { setStatus('Load text first', 'error'); return; }
+  // Read from the selected paragraph itself — not the one after it.
   if (state.markerP < 0) {
     setMarker(0);
     readAloudFrom(0);
   } else {
-    readAloudFrom(state.markerP + 1);
+    readAloudFrom(state.markerP);
   }
 });
 
@@ -477,7 +531,7 @@ els.btnMic.addEventListener('click', toggleListening);
 // ============================================================
 els.btnReact.addEventListener('click', () => {
   if (state.paras.length === 0) { setStatus('Load a source text first', 'error'); return; }
-  if (state.markerP < 0) { setStatus('Click the paragraph you’ve read up to first', 'error'); return; }
+  if (state.markerP < 0) { setStatus('Click a paragraph to set your spot first', 'error'); return; }
   if (state.busyEval) { setStatus('Wait for the current evaluation to finish', 'error'); return; }
   stopTTS();
   state.pending = { markerP: state.markerP };
@@ -555,11 +609,11 @@ function updateControls() {
   els.activityCount.textContent = String(state.reactions.length);
 
   if (state.pending) {
-    els.reactHint.textContent = `Reacting at ¶ ${state.pending.markerP + 1} — everything before it is the evaluated context.`;
+    els.reactHint.textContent = `Reacting at ¶ ${state.pending.markerP + 1} — everything up to it is the evaluated context.`;
   } else if (state.busyEval) {
     els.reactHint.textContent = 'Evaluating your reaction…';
   } else {
-    els.reactHint.textContent = 'Click a paragraph you’ve read up to, then press “✍ React here”.';
+    els.reactHint.textContent = 'Click a paragraph to set your spot, then press “✍ React here”.';
   }
 }
 
@@ -893,4 +947,6 @@ els.exportMd.addEventListener('click', () => {
 // ============================================================
 applyTheme('dark');
 consumePendingGrab();
+loadSavedKeys();
 updateControls();
+updateForgetBtn();

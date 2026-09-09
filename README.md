@@ -3,9 +3,11 @@
 Read any text, mark where you are, then react — in writing or by just speaking —
 and get an AI evaluation of your understanding versus the source text.
 
-**No accounts, no servers, no persistence.** Everything (source text, reactions,
-evaluations, API keys) lives only in the memory of the running page. Close the
-tab and it's gone. JSON/Markdown export happens in-browser.
+**No accounts, no servers, no session persistence.** Source text, reactions and
+evaluations live only in the memory of the running page — close the tab and
+they're gone. The only thing that may persist is your BYOK API key, if you
+choose to save it (extension-private browser storage; erased on request).
+JSON/Markdown export happens in-browser.
 
 ## Features
 
@@ -18,7 +20,7 @@ tab and it's gone. JSON/Markdown export happens in-browser.
 | Evaluation | BYOK **DeepSeek** (`deepseek-reasoner` / `deepseek-chat`) **or** OpenAI (`o3-mini` / `o4-mini` / `gpt-4o`); reasoning models fall back automatically |
 | Scoring | Accuracy · Understanding · Coverage · Unsupported inference · Incorrect claims · Missed points · Overall — plus a **suggested better summary** |
 | Export | JSON + Markdown downloaded directly from the browser |
-| Storage | None. No localStorage, no IndexedDB, no database. Keys are never stored |
+| Storage | Session data: none — page memory only. API keys: optional, extension-private `chrome.storage.local`, deleted completely by “Forget saved keys” |
 
 ## Files
 
@@ -66,7 +68,10 @@ icons/          16/48/128 placeholder icons
   speech never leave your machine.
 - The only network calls go from your chosen API key to `api.openai.com` or
   `api.deepseek.com` (chat completions) when you run an evaluation.
-- API keys are read from the inputs on demand and kept in memory only.
+- API keys are read on demand from the Settings inputs and only ever sent to the
+  provider you picked. If you save them, they live in this extension's private
+  `chrome.storage.local` — sites and other extensions cannot read that area —
+  and **Forget saved keys** deletes them from the browser entirely.
 
 ## License
 
