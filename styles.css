@@ -205,6 +205,15 @@ textarea { resize: vertical; line-height: 1.5; }
 }
 #react-hint { font-size: 11.5px; }
 .composer-btns { display: flex; gap: 8px; align-items: center; }
+/* export picker next to the mic — looks like a button, opens the OS dropdown */
+.export-select {
+  width: auto; cursor: pointer;
+  padding: 6px 30px 6px 12px; border-radius: 8px;
+  background: var(--panel-2); border: 1px solid var(--border);
+  color: var(--text); font-size: 13px; line-height: 1.4;
+}
+.export-select:hover:not(:disabled) { background: var(--border); }
+.export-select:disabled { opacity: 0.4; cursor: not-allowed; }
 #react-text { resize: none; }
 #btn-mic.listening { background: var(--record); color: #fff; border-color: var(--record); animation: pulse 1.4s infinite; }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.65; } }

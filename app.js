@@ -35,7 +35,7 @@ const $ = (id) => document.getElementById(id);
 const els = {
   toast: $('toast'),
   btnSettings: $('btn-settings'),
-  exportJson: $('export-json'), exportMd: $('export-md'),
+  exportSelect: $('export-select'),
   btnSource: $('btn-source'),
   readPos: $('read-pos'), btnReact: $('btn-react'),
   voiceSelect: $('voice-select'), rateSelect: $('rate-select'),
@@ -749,8 +749,7 @@ function updateControls() {
   els.btnMic.disabled = !canCompose || !recognition;
   els.btnSend.disabled = !canCompose || !els.reactText.value.trim();
 
-  els.exportJson.disabled = state.reactions.length === 0;
-  els.exportMd.disabled = state.reactions.length === 0;
+  els.exportSelect.disabled = state.reactions.length === 0;
   els.activityCount.textContent = String(state.reactions.length);
 
   if (state.pending) {
@@ -1123,19 +1122,19 @@ function downloadBlob(blob, filename) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-els.exportJson.addEventListener('click', () => {
-  if (!state.reactions.length) return;
-  downloadBlob(
-    new Blob([JSON.stringify(buildJson(), null, 2)], { type: 'application/json' }),
-    `reaction-learner-${slug(state.sourceTitle)}-${Date.now()}.json`
-  );
-});
-els.exportMd.addEventListener('click', () => {
-  if (!state.reactions.length) return;
-  downloadBlob(
-    new Blob([buildMarkdown()], { type: 'text/markdown' }),
-    `reaction-learner-${slug(state.sourceTitle)}-${Date.now()}.md`
-  );
+els.exportSelect.addEventListener('change', () => {
+  const fmt = els.exportSelect.value;
+  els.exportSelect.value = ''; // reset so the same choice can be picked again
+  if (!fmt || !state.reactions.length) return;
+  const base = `reaction-learner-${slug(state.sourceTitle)}-${Date.now()}`;
+  if (fmt === 'json') {
+    downloadBlob(
+      new Blob([JSON.stringify(buildJson(), null, 2)], { type: 'application/json' }),
+      base + '.json'
+    );
+  } else if (fmt === 'markdown') {
+    downloadBlob(new Blob([buildMarkdown()], { type: 'text/markdown' }), base + '.md');
+  }
 });
 
 // ============================================================

@@ -14,9 +14,6 @@
     <span class="brand">Reaction Learner</span>
     <div class="spacer"></div>
     <button id="btn-settings" class="btn compact" title="Settings">⚙ Settings</button>
-    <span class="vsep"></span>
-    <button id="export-json" class="btn compact" disabled>Export JSON</button>
-    <button id="export-md" class="btn compact" disabled>Export Markdown</button>
   </header>
 
   <!-- ===================== HORIZONTAL SPLIT ===================== -->
@@ -70,6 +67,11 @@
         <textarea id="react-text" rows="2" placeholder="Type your reaction here — or click the mic and just say it…" disabled></textarea>
         <div class="composer-btns">
           <button id="btn-mic" class="btn" disabled title="Native speech-to-text"><span class="record-dot"></span>Mic</button>
+          <select id="export-select" class="export-select" disabled title="Export this session">
+            <option value="" selected disabled>⬇ Export</option>
+            <option value="json">JSON</option>
+            <option value="markdown">Markdown</option>
+          </select>
           <div class="spacer"></div>
           <button id="btn-send" class="btn primary" disabled>Send</button>
         </div>
