@@ -60,8 +60,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 /* ---------- pane header (reader pane’s own top row — no full-width nav bar) ---------- */
 .pane-head {
   flex: 0 0 auto; display: flex; align-items: center; gap: 8px;
-  padding: 6px 12px; background: var(--panel); border-bottom: 1px solid var(--border);
-  min-height: 35px;
+  height: 40px; padding: 0 12px; box-sizing: border-box;
+  background: var(--panel); border-bottom: 1px solid var(--border);
 }
 .brand { font-weight: 650; font-size: 14px; letter-spacing: 0.01em; white-space: nowrap; }
 
@@ -141,6 +141,7 @@ textarea { resize: vertical; line-height: 1.5; }
   flex: 1 1 auto; min-height: 0; overflow-y: auto;
   padding: 18px 26px; background: var(--bg);
   overscroll-behavior: contain;
+  display: flex; flex-direction: column;
 }
 .reading p.para {
   font-size: 15.5px; line-height: 1.75; margin: 0 0 14px; padding: 2px 8px;
@@ -152,8 +153,13 @@ textarea { resize: vertical; line-height: 1.5; }
 .reading p.para.after { opacity: 0.32; }
 .reading p.para.marker { border-left-color: var(--marker-line); background: var(--marker); }
 .reading p.para.reading-now { background: var(--marker); border-left-color: var(--marker-line); opacity: 1; }
-.empty-state { color: var(--text-dim); text-align: center; padding: 36px 20px; font-size: 13.5px; line-height: 1.7; }
+.empty-state {
+  color: var(--text-dim); text-align: center; padding: 24px 20px;
+  font-size: 13.5px; line-height: 1.7;
+}
 .empty-state b { color: var(--text); }
+/* center the placeholder messages inside their pane */
+.reading > .empty-state, .activity > .empty-state { margin: auto 0; }
 
 /* activity column */
 .activity-col {
@@ -163,8 +169,8 @@ textarea { resize: vertical; line-height: 1.5; }
 .activity-head {
   flex: 0 0 auto; font-size: 11.5px; font-weight: 600; color: var(--text-dim);
   text-transform: uppercase; letter-spacing: 0.05em;
-  padding: 6px 12px 6px 16px; background: var(--panel);
-  border-bottom: 1px solid var(--border); min-height: 35px;
+  height: 40px; padding: 0 12px 0 16px; box-sizing: border-box;
+  background: var(--panel); border-bottom: 1px solid var(--border);
   display: flex; align-items: center; gap: 8px;
 }
 #btn-close-activity { font-weight: 700; }
@@ -186,7 +192,6 @@ textarea { resize: vertical; line-height: 1.5; }
   padding: 4px 14px 10px; display: flex; flex-direction: column; gap: 10px;
   overscroll-behavior: contain;
 }
-.activity > .empty-state { margin: auto 0; }
 
 /* bubbles */
 .bubble { max-width: 100%; padding: 10px 13px; border-radius: 12px; font-size: 13.5px; line-height: 1.55; word-wrap: break-word; }
@@ -221,9 +226,9 @@ textarea { resize: vertical; line-height: 1.5; }
 /* export picker next to the mic — looks like a button, opens the OS dropdown */
 .export-select {
   width: auto; cursor: pointer;
-  padding: 6px 30px 6px 12px; border-radius: 8px;
+  padding: 7px 30px 7px 12px; border-radius: 8px;
   background: var(--panel-2); border: 1px solid var(--border);
-  color: var(--text); font-size: 13px; line-height: 1.4;
+  color: var(--text); font-size: 13px; line-height: 1.5;
 }
 .export-select:hover:not(:disabled) { background: var(--border); }
 .export-select:disabled { opacity: 0.4; cursor: not-allowed; }
