@@ -54,9 +54,9 @@
     <section class="activity-col" id="activity-col">
       <div id="activity-resizer" class="activity-resizer" title="Drag to resize"></div>
       <div class="activity-head">
-        <span>Activity</span>
+        <span class="head-title">Activity</span>
         <div class="spacer"></div>
-        <button id="btn-close-activity" class="btn icon" title="Close activity">✕</button>
+        <button id="btn-close-activity" class="btn compact" title="Close activity">✕</button>
       </div>
       <div id="activity" class="activity">
         <div class="empty-state">Click a paragraph to set your spot, press “✍ React here”, and your reactions + AI evaluations will appear here.</div>
@@ -87,15 +87,17 @@
   <div class="modal">
     <div class="modal-head">
       <h3>Add source text</h3>
-      <button class="btn icon" data-close="source-modal" title="Close">✕</button>
+      <button class="btn compact" data-close="source-modal" title="Close">✕</button>
     </div>
-    <p class="hint">Paste the article, lecture notes or chapter you want to study. Paragraphs and line breaks are kept. It stays in memory only.</p>
-    <textarea id="paste-text" rows="10" placeholder="Paste any text — an article, lecture notes, a book chapter…" spellcheck="false"></textarea>
-    <div class="modal-actions">
-      <button class="btn" data-close="source-modal">Cancel</button>
-      <button id="load-paste" class="btn primary">Load text</button>
+    <div class="modal-body">
+      <p class="hint">Paste the article, lecture notes or chapter you want to study. Paragraphs and line breaks are kept. It stays in memory only.</p>
+      <textarea id="paste-text" rows="10" placeholder="Paste any text — an article, lecture notes, a book chapter…" spellcheck="false"></textarea>
+      <div class="modal-actions">
+        <button class="btn" data-close="source-modal">Cancel</button>
+        <button id="load-paste" class="btn primary">Load text</button>
+      </div>
+      <p class="hint">Tip: to study a webpage, click the extension’s toolbar icon while on that page — its readable text loads automatically.</p>
     </div>
-    <p class="hint">Tip: to study a webpage, click the extension’s toolbar icon while on that page — its readable text loads automatically.</p>
   </div>
 </div>
 
@@ -104,29 +106,30 @@
   <div class="modal">
     <div class="modal-head">
       <h3>Settings</h3>
-      <button class="btn icon" data-close="settings-modal" title="Close">✕</button>
+      <button class="btn compact" data-close="settings-modal" title="Close">✕</button>
     </div>
-
-    <div class="appearance-row">
-      <h4 class="modal-label appearance-label">Appearance</h4>
-      <div class="seg">
-        <button id="theme-system" class="seg-btn active">🖥 System</button>
-        <button id="theme-light" class="seg-btn">☀ Light</button>
-        <button id="theme-dark" class="seg-btn">🌙 Dark</button>
+    <div class="modal-body">
+      <div class="appearance-row">
+        <h4 class="modal-label appearance-label">Appearance</h4>
+        <div class="seg">
+          <button id="theme-system" class="seg-btn active">🖥 System</button>
+          <button id="theme-light" class="seg-btn">☀ Light</button>
+          <button id="theme-dark" class="seg-btn">🌙 Dark</button>
+        </div>
       </div>
+
+      <h4 class="modal-label">AI evaluation provider</h4>
+      <p class="hint">Pick a provider and type its API key. Keys are kept in this extension’s private browser storage (nothing else can read them) and are sent only to that provider when you evaluate. “Forget saved keys” erases them from the browser completely.</p>
+
+      <div id="provider-list"></div>
+
+      <div class="forget-row">
+        <button id="btn-forget-keys" class="btn compact" disabled>🗑 Forget saved keys</button>
+        <span class="hint">Erases any saved keys from this browser.</span>
+      </div>
+
+      <div id="api-error"></div>
     </div>
-
-    <h4 class="modal-label">AI evaluation provider</h4>
-    <p class="hint">Pick a provider and type its API key. Keys are kept in this extension’s private browser storage (nothing else can read them) and are sent only to that provider when you evaluate. “Forget saved keys” erases them from the browser completely.</p>
-
-    <div id="provider-list"></div>
-
-    <div class="forget-row">
-      <button id="btn-forget-keys" class="btn compact" disabled>🗑 Forget saved keys</button>
-      <span class="hint">Erases any saved keys from this browser.</span>
-    </div>
-
-    <div id="api-error"></div>
   </div>
 </div>
 

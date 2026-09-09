@@ -167,13 +167,14 @@ textarea { resize: vertical; line-height: 1.5; }
   border-left: 1px solid var(--border); background: var(--bg);
 }
 .activity-head {
-  flex: 0 0 auto; font-size: 11.5px; font-weight: 600; color: var(--text-dim);
-  text-transform: uppercase; letter-spacing: 0.05em;
-  height: 40px; padding: 0 12px 0 16px; box-sizing: border-box;
+  flex: 0 0 auto; height: 40px; padding: 0 12px 0 16px; box-sizing: border-box;
   background: var(--panel); border-bottom: 1px solid var(--border);
   display: flex; align-items: center; gap: 8px;
 }
-#btn-close-activity { font-weight: 700; }
+.activity-head .head-title {
+  font-size: 14px; font-weight: 650; color: var(--text);
+  letter-spacing: 0.01em; white-space: nowrap;
+}
 /* resize handle between reader and activity — desktop only */
 .activity-resizer { display: none; }
 
@@ -246,14 +247,29 @@ textarea { resize: vertical; line-height: 1.5; }
 }
 .modal {
   background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
-  box-shadow: var(--shadow); padding: 18px 20px;
-  width: min(600px, 100%); max-height: calc(100vh - 40px); overflow-y: auto;
-  display: flex; flex-direction: column; gap: 10px;
+  box-shadow: var(--shadow);
+  width: min(600px, 100%); max-height: calc(100vh - 40px);
+  display: flex; flex-direction: column; overflow: hidden;
 }
 /* settings modal gets extra width on desktop (source modal stays compact) */
-#settings-modal .modal { width: min(780px, 100%); padding: 20px 24px; }
-.modal-head { display: flex; align-items: center; justify-content: space-between; }
-.modal-head h3 { font-size: 15px; font-weight: 650; }
+#settings-modal .modal { width: min(780px, 100%); }
+/* modal header — fixed nav bar, same as the app panes’ 40px header */
+.modal-head {
+  flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between;
+  height: 40px; padding: 0 12px 0 16px; box-sizing: border-box;
+  background: var(--panel); border-bottom: 1px solid var(--border);
+}
+.modal-head h3 {
+  font-size: 14px; font-weight: 650; color: var(--text);
+  letter-spacing: 0.01em; white-space: nowrap;
+}
+/* modal content scrolls under the fixed header */
+.modal-body {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto;
+  padding: 16px 20px 20px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+#settings-modal .modal-body { padding: 16px 24px 22px; }
 .modal-label {
   font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
   color: var(--text-dim); margin-top: 10px;
