@@ -23,8 +23,8 @@ const state = {
   reactions: [],      // { id, text, mode, atParagraph, sliceText, truncated, sliceNote, sliceChars, ts }
   evals: [],          // { reactionId, provider, model, ok, error, result, raw }
   provider: 'openai',
-  activityOpen: true,  // right-side activity panel visibility
-  panelW: 0,           // desktop activity panel width in px
+  reactionsOpen: true,  // right-side reactions panel visibility
+  panelW: 0,           // desktop reactions panel width in px
   busyEval: false,
   voiceTyped: false,  // reaction text came from the mic
   listening: false,
@@ -43,11 +43,11 @@ const els = {
   voiceSelect: $('voice-select'), rateSelect: $('rate-select'),
   btnRead: $('btn-read'), btnPause: $('btn-pause'), btnStop: $('btn-stop'),
   reading: $('reading'),
-  activity: $('activity'), reactHint: $('react-hint'),
+  reactions: $('reactions'), reactHint: $('react-hint'),
   reactText: $('react-text'), btnMic: $('btn-mic'), btnSend: $('btn-send'),
-  // mobile activity overlay
-  activityCol: $('activity-col'), btnActivity: $('btn-activity'),
-  btnCloseActivity: $('btn-close-activity'), resizer: $('activity-resizer'),
+  // mobile reactions overlay
+  reactionsCol: $('reactions-col'), btnReactions: $('btn-reactions'),
+  btnCloseReactions: $('btn-close-reactions'), resizer: $('reactions-resizer'),
   // modals
   sourceModal: $('source-modal'), settingsModal: $('settings-modal'),
   pasteText: $('paste-text'), loadPaste: $('load-paste'),
@@ -98,29 +98,29 @@ document.querySelectorAll('.modal-overlay').forEach((overlay) => {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     document.querySelectorAll('.modal-overlay:not(.hidden)').forEach((ov) => closeModal(ov));
-    if (els.activityCol.classList.contains('open')) closeActivity();
+    if (els.reactionsCol.classList.contains('open')) closeReactions();
   }
 });
 
-// ---------- activity panel: collapsible (FAB toggle), resizable on desktop ----------
-function setActivityOpen(open) {
-  state.activityOpen = open;
-  document.body.classList.toggle('activity-closed', !open);
-  els.activityCol.classList.toggle('open', open);
+// ---------- reactions panel: collapsible (FAB toggle), resizable on desktop ----------
+function setReactionsOpen(open) {
+  state.reactionsOpen = open;
+  document.body.classList.toggle('reactions-closed', !open);
+  els.reactionsCol.classList.toggle('open', open);
   if (open) {
-    scrollBottom(els.activity);
+    scrollBottom(els.reactions);
   } else if (recognition && state.listening) {
     recognition.stop();
     endListening();
   }
 }
-function openActivity() { setActivityOpen(true); }
-function closeActivity() { setActivityOpen(false); }
-function toggleActivity() { setActivityOpen(!state.activityOpen); }
-els.btnActivity.addEventListener('click', toggleActivity);
-els.btnCloseActivity.addEventListener('click', closeActivity);
+function openReactions() { setReactionsOpen(true); }
+function closeReactions() { setReactionsOpen(false); }
+function toggleReactions() { setReactionsOpen(!state.reactionsOpen); }
+els.btnReactions.addEventListener('click', toggleReactions);
+els.btnCloseReactions.addEventListener('click', closeReactions);
 
-// drag the divider between reader and activity to resize the panel
+// drag the divider between reader and reactions to resize the panel
 function clampPanelW(w) {
   const maxW = Math.round(window.innerWidth * 0.7);
   return Math.min(Math.max(Math.round(w), 280), maxW);
@@ -136,32 +136,32 @@ function onResizeMove(e) {
 }
 function onResizeUp() {
   dragW = null;
-  document.body.classList.remove('activity-resizing');
+  document.body.classList.remove('reactions-resizing');
   document.removeEventListener('pointermove', onResizeMove);
 }
 els.resizer.addEventListener('pointerdown', (e) => {
   if (window.innerWidth <= 1000) return;
   e.preventDefault();
   dragW = { startX: e.clientX, startW: state.panelW || 400 };
-  document.body.classList.add('activity-resizing');
+  document.body.classList.add('reactions-resizing');
   document.addEventListener('pointermove', onResizeMove);
   document.addEventListener('pointerup', onResizeUp, { once: true });
 });
 
-function initActivityPanel() {
+function initReactionsPanel() {
   if (window.innerWidth > 1000) {
     // desktop: panel open by default, width ~38% of the window
     applyPanelW(Math.min(Math.max(Math.round(window.innerWidth * 0.38), 360), 560));
   } else {
     // mobile: collapsed — the FAB opens the full-screen sheet
-    setActivityOpen(false);
+    setReactionsOpen(false);
   }
 }
 window.addEventListener('resize', () => {
   if (window.innerWidth <= 1000) {
-    if (state.activityOpen) setActivityOpen(false); // side panel doesn't exist here
+    if (state.reactionsOpen) setReactionsOpen(false); // side panel doesn't exist here
   } else {
-    if (!state.panelW) initActivityPanel();
+    if (!state.panelW) initReactionsPanel();
   }
 });
 
@@ -958,8 +958,8 @@ async function runEvaluation(reaction, prov) {
   ));
   card.appendChild(head0);
   card.appendChild(wait);
-  els.activity.appendChild(card);
-  scrollBottom(els.activity);
+  els.reactions.appendChild(card);
+  scrollBottom(els.reactions);
 
   try {
     const schemaRows = DIM_GUIDES.map(([k]) => `  "${k}": {"score": 0-100, "explanation": "one sentence"}`).join(',\n');
@@ -1087,7 +1087,7 @@ function buildEvalDOM(record, reaction) {
 }
 
 function renderReaction(reaction) {
-  const empty = els.activity.querySelector('.empty-state');
+  const empty = els.reactions.querySelector('.empty-state');
   if (empty) empty.remove();
   const bubble = document.createElement('div');
   bubble.className = 'bubble user';
@@ -1102,8 +1102,8 @@ function renderReaction(reaction) {
   body.textContent = reaction.text;
   bubble.appendChild(head);
   bubble.appendChild(body);
-  els.activity.appendChild(bubble);
-  scrollBottom(els.activity);
+  els.reactions.appendChild(bubble);
+  scrollBottom(els.reactions);
 }
 
 // ============================================================
@@ -1200,7 +1200,7 @@ els.exportSelect.addEventListener('change', () => {
 // ============================================================
 renderTheme();
 renderProviderCards();
-initActivityPanel();
+initReactionsPanel();
 consumePendingGrab();
 loadSavedKeys();
 updateControls();

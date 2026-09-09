@@ -182,27 +182,27 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--a
 }
 .empty-state b { color: var(--text); }
 /* center the placeholder messages inside their pane */
-.reading > .empty-state, .activity > .empty-state { margin: auto 0; }
+.reading > .empty-state, .reactions > .empty-state { margin: auto 0; }
 
-/* activity column */
-.activity-col {
+/* reactions column */
+.reactions-col {
   display: flex; flex-direction: column; min-width: 0; min-height: 0;
   border-left: 1px solid var(--border); background: var(--bg);
 }
-.activity-head {
+.reactions-head {
   flex: 0 0 auto; height: 48px; padding: 0 16px; box-sizing: border-box;
   background: var(--panel); border-bottom: 1px solid var(--border);
   display: flex; align-items: center; gap: 12px;
 }
-.activity-head .head-title {
+.reactions-head .head-title {
   font-size: 14px; font-weight: 650; color: var(--text);
   letter-spacing: 0.01em; white-space: nowrap;
 }
-/* resize handle between reader and activity — desktop only */
-.activity-resizer { display: none; }
+/* resize handle between reader and reactions — desktop only */
+.reactions-resizer { display: none; }
 
-/* floating “Activity” pill — opens the panel (desktop & mobile) */
-.activity-fab {
+/* floating “Reactions” pill — opens the panel (desktop & mobile) */
+.reactions-fab {
   display: inline-flex; align-items: center; gap: 7px;
   position: fixed; right: 16px; bottom: 16px; z-index: 45;
   background: var(--accent); color: #fff; border: none;
@@ -210,8 +210,8 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--a
   font-size: 13.5px; font-weight: 600;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
 }
-.activity-fab:hover { background: var(--accent-hover); }
-.activity {
+.reactions-fab:hover { background: var(--accent-hover); }
+.reactions {
   flex: 1 1 auto; min-height: 0; overflow-y: auto;
   padding: 4px 14px 10px; display: flex; flex-direction: column; gap: 10px;
   overscroll-behavior: contain;
@@ -341,37 +341,37 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--a
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
 
-/* desktop: collapsible + resizable activity panel */
+/* desktop: collapsible + resizable reactions panel */
 @media (min-width: 1001px) {
-  .activity-col { position: relative; }
-  .activity-resizer {
+  .reactions-col { position: relative; }
+  .reactions-resizer {
     display: block; position: absolute; top: 0; bottom: 0; left: -4px;
     width: 9px; cursor: col-resize; z-index: 6;
   }
-  .activity-resizer::after {
+  .reactions-resizer::after {
     content: ""; position: absolute; left: 3px; top: 0; bottom: 0; width: 3px;
     background: transparent; transition: background 0.15s;
   }
-  .activity-resizer:hover::after,
-  body.activity-resizing .activity-resizer::after { background: var(--accent); }
-  body.activity-resizing { cursor: col-resize; user-select: none; }
+  .reactions-resizer:hover::after,
+  body.reactions-resizing .reactions-resizer::after { background: var(--accent); }
+  body.reactions-resizing { cursor: col-resize; user-select: none; }
 
   /* collapsed: reader takes everything, FAB shows */
-  body.activity-closed .split { grid-template-columns: minmax(0, 1fr); }
-  body.activity-closed .activity-col { display: none; }
-  body.activity-closed .activity-fab { display: inline-flex; }
-  body:not(.activity-closed) .activity-fab { display: none; }
+  body.reactions-closed .split { grid-template-columns: minmax(0, 1fr); }
+  body.reactions-closed .reactions-col { display: none; }
+  body.reactions-closed .reactions-fab { display: inline-flex; }
+  body:not(.reactions-closed) .reactions-fab { display: none; }
   /* keep toasts clear of the FAB while collapsed */
-  body.activity-closed .toast { bottom: 84px; }
+  body.reactions-closed .toast { bottom: 84px; }
 }
 
-/* mobile / narrow: reader fills the screen, activity becomes a
+/* mobile / narrow: reader fills the screen, reactions becomes a
    full-screen overlay opened by a floating button */
 @media (max-width: 1000px) {
   .split { display: block; overflow: visible; }
   .reader-col { height: 100%; }
 
-  .activity-col {
+  .reactions-col {
     position: fixed; inset: 0; z-index: 60;
     border-left: none; border-top: 1px solid var(--border);
     transform: translateY(100%);
@@ -379,7 +379,7 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--a
     transition: transform 0.25s ease, visibility 0.25s ease;
     box-shadow: var(--shadow);
   }
-  .activity-col.open { transform: translateY(0); visibility: visible; }
+  .reactions-col.open { transform: translateY(0); visibility: visible; }
 
   /* modals go full screen on mobile */
   .modal-overlay { padding: 0; align-items: stretch; }
@@ -388,7 +388,7 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--a
     border-radius: 0; border: none; box-shadow: none;
   }
 
-  /* toast sits above the activity FAB on mobile */
+  /* toast sits above the reactions FAB on mobile */
   .toast { bottom: 84px; }
 }
 

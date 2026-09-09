@@ -58,7 +58,7 @@ icons/          16/48/128 placeholder icons
    (¶ 0 → marker) is sent as context.
 5. **Evaluate** — open **⚙ Settings** (top bar), pick a provider card
    (OpenAI, Claude, Gemini, DeepSeek, Kimi, Mistral), paste its key, choose a
-   model, hit **Send**. Scores + suggested summary appear in the Activity column.
+   model, hit **Send**. Scores + suggested summary appear in the Reactions column.
 6. **Export** — JSON/Markdown anytime while the session is open.
 
 ## Privacy
