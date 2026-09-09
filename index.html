@@ -55,11 +55,16 @@
           while on a webpage to load its text automatically.
         </div>
       </div>
+      <button id="btn-activity" class="activity-fab" title="Open activity">💬 Activity <span class="fab-count" id="activity-count">0</span></button>
     </section>
 
     <!-- activity: reactions + evaluations + composer -->
-    <section class="activity-col">
-      <div class="activity-head">Activity</div>
+    <section class="activity-col" id="activity-col">
+      <div class="activity-head">
+        <span>Activity</span>
+        <div class="spacer"></div>
+        <button id="btn-close-activity" class="btn icon" title="Close activity">✕</button>
+      </div>
       <div id="activity" class="activity">
         <div class="empty-state">Click a paragraph you’ve read up to, press “✍ React here”, and your reactions + AI evaluations will appear here.</div>
       </div>

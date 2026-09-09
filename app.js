@@ -41,6 +41,9 @@ const els = {
   reading: $('reading'),
   activity: $('activity'), reactHint: $('react-hint'),
   reactText: $('react-text'), btnMic: $('btn-mic'), btnSend: $('btn-send'),
+  // mobile activity overlay
+  activityCol: $('activity-col'), btnActivity: $('btn-activity'),
+  btnCloseActivity: $('btn-close-activity'), activityCount: $('activity-count'),
   // modals
   sourceModal: $('source-modal'), settingsModal: $('settings-modal'),
   pasteText: $('paste-text'), loadPaste: $('load-paste'),
@@ -85,8 +88,21 @@ document.querySelectorAll('.modal-overlay').forEach((overlay) => {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     document.querySelectorAll('.modal-overlay:not(.hidden)').forEach((ov) => closeModal(ov));
+    if (els.activityCol.classList.contains('open')) closeActivity();
   }
 });
+
+// mobile: activity collapses into a full-screen panel
+function openActivity() {
+  els.activityCol.classList.add('open');
+  scrollBottom(els.activity);
+}
+function closeActivity() {
+  els.activityCol.classList.remove('open');
+  if (recognition && state.listening) { recognition.stop(); endListening(); }
+}
+els.btnActivity.addEventListener('click', openActivity);
+els.btnCloseActivity.addEventListener('click', closeActivity);
 
 // ============================================================
 // SETTINGS: theme + provider cards
@@ -536,6 +552,7 @@ function updateControls() {
 
   els.exportJson.disabled = state.reactions.length === 0;
   els.exportMd.disabled = state.reactions.length === 0;
+  els.activityCount.textContent = String(state.reactions.length);
 
   if (state.pending) {
     els.reactHint.textContent = `Reacting at ¶ ${state.pending.markerP + 1} — everything before it is the evaluated context.`;
