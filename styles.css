@@ -82,31 +82,35 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 /* ---------- buttons ---------- */
 .btn {
   background: var(--panel-2); border: 1px solid var(--border); color: var(--text);
-  padding: 7px 12px; border-radius: 8px; cursor: pointer; font-size: 13px;
-  white-space: nowrap;
+  height: 34px; padding: 0 14px; border-radius: 8px; cursor: pointer; font-size: 13px;
+  white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  box-sizing: border-box;
 }
 .btn:hover:not(:disabled) { background: var(--border); }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 500; }
 .btn.primary:hover:not(:disabled) { background: var(--accent-hover); }
-.btn.compact { padding: 4px 10px; font-size: 12.5px; border-radius: 6px; }
-.btn.icon { padding: 2px 8px; font-size: 13px; line-height: 1.4; }
+.btn.compact { height: 34px; padding: 0 10px; font-size: 12.5px; border-radius: 6px; }
+.btn.icon { height: 34px; padding: 0 8px; font-size: 13px; }
 
 .seg { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; width: 100%; }
 .seg-btn {
-  flex: 1; padding: 8px 10px; background: var(--panel); color: var(--text-dim);
+  flex: 1; height: 34px; padding: 0 6px; background: var(--panel); color: var(--text-dim);
   border: none; cursor: pointer; font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
 }
 .seg-btn.active { background: var(--accent); color: #fff; font-weight: 500; }
 .seg-btn:not(.active):hover { background: var(--border); color: var(--text); }
 
 label { font-size: 11px; font-weight: 600; color: var(--text-dim); margin-top: 8px; display: block; }
-input[type="password"], textarea, select {
-  width: 100%; padding: 8px 10px; background: var(--panel);
+input[type="password"], select, textarea {
+  width: 100%; background: var(--panel);
   border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 13px;
 }
+/* uniform 34px fields; the big source box & reaction box keep natural height */
+input[type="password"], select { height: 34px; padding: 0 10px; }
+textarea { padding: 8px 10px; line-height: 1.5; resize: vertical; }
 input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); }
-textarea { resize: vertical; line-height: 1.5; }
 .hint { font-size: 11.5px; color: var(--text-dim); }
 .mini-label { font-size: 11px; color: var(--text-dim); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
 #api-error { font-size: 12px; color: var(--error); min-height: 14px; margin-top: 6px; }
@@ -226,10 +230,10 @@ textarea { resize: vertical; line-height: 1.5; }
 .composer-btns { display: flex; gap: 8px; align-items: center; }
 /* export picker next to the mic — looks like a button, opens the OS dropdown */
 .export-select {
-  width: auto; cursor: pointer;
-  padding: 7px 30px 7px 12px; border-radius: 8px;
+  width: auto; height: 34px; cursor: pointer;
+  padding: 0 30px 0 12px; border-radius: 8px;
   background: var(--panel-2); border: 1px solid var(--border);
-  color: var(--text); font-size: 13px; line-height: 1.5;
+  color: var(--text); font-size: 13px;
 }
 .export-select:hover:not(:disabled) { background: var(--border); }
 .export-select:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -284,7 +288,7 @@ textarea { resize: vertical; line-height: 1.5; }
   width: auto; flex: 1 1 260px; max-width: 380px;
   margin-left: auto;
 }
-.appearance-row .seg-btn { font-size: 12px; padding: 8px 4px; white-space: nowrap; }
+.appearance-row .seg-btn { font-size: 12px; padding: 0 4px; white-space: nowrap; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
 
 /* provider cards — stacked, one after another */
