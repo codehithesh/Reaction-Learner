@@ -9,113 +9,141 @@
 <body>
 <div class="app">
 
-  <!-- ===================== LEFT: SOURCE / PROVIDER / SPEECH ===================== -->
-  <aside class="left-panel">
-    <div class="header">
-      <h1>Reaction Learner</h1>
-      <button id="theme-toggle" title="Toggle theme">🌙</button>
-    </div>
+  <!-- ===================== TOP BAR ===================== -->
+  <header class="topbar">
+    <span class="brand">Reaction Learner</span>
+    <span class="session-note">in-memory session — close tab to erase</span>
+    <div class="spacer"></div>
+    <button id="btn-settings" class="btn compact" title="Settings">⚙ Settings</button>
+    <span class="vsep"></span>
+    <button id="export-json" class="btn compact" disabled>Export JSON</button>
+    <button id="export-md" class="btn compact" disabled>Export Markdown</button>
+  </header>
+  <div id="status-line" class="statusbar"></div>
 
-    <section class="card">
-      <h2>1 · Source text</h2>
-      <div class="seg" role="tablist">
-        <button id="src-tab-paste" class="seg-btn active">Paste</button>
-        <button id="src-tab-grab" class="seg-btn">Grab page</button>
-      </div>
-      <div id="src-pane-paste">
-        <textarea id="paste-text" rows="6" placeholder="Paste any text — an article, lecture notes, a book chapter…"></textarea>
-        <button id="load-paste" class="btn primary">Load text</button>
-      </div>
-      <div id="src-pane-grab" class="hidden">
-        <p class="hint">Click the toolbar icon <b>while on a webpage</b> to open this app with that page's text loaded. Or grab the last page you opened it from:</p>
-        <button id="btn-grab-again" class="btn primary">↺ Grab current tab</button>
-        <div id="grab-meta" class="dim"></div>
-      </div>
-      <div id="status-line"></div>
-    </section>
+  <!-- ===================== HORIZONTAL SPLIT ===================== -->
+  <div class="split">
 
-    <section class="card">
-      <h2>2 · Evaluation model (BYOK)</h2>
-      <div class="seg">
-        <button id="prov-oai" class="seg-btn active">OpenAI</button>
-        <button id="prov-ds" class="seg-btn">DeepSeek</button>
+    <!-- reader: the extracted script + speech controls -->
+    <section class="reader-col">
+      <div class="reader-toolbar">
+        <button id="btn-source" class="btn" title="Paste text to study">✎ Text source</button>
+        <button id="btn-grab-now" class="btn" title="Load the readable text of the current page">Grab page</button>
+        <span class="vsep"></span>
+        <span id="read-pos" class="dim">No text loaded</span>
+        <div class="spacer"></div>
+        <button id="btn-react" class="btn primary" disabled>✍ React here</button>
       </div>
-      <div id="oai-fields">
-        <label for="key-oai">OpenAI API key</label>
-        <input type="password" id="key-oai" placeholder="sk-..." autocomplete="off" spellcheck="false">
-        <label for="model-oai">Model</label>
-        <select id="model-oai">
-          <option value="o3-mini" selected>o3-mini (reasoning)</option>
-          <option value="o4-mini">o4-mini (reasoning)</option>
-          <option value="gpt-4o">gpt-4o (fast)</option>
-        </select>
-        <p class="hint">Reasoning models fall back to gpt-4o automatically if your key rejects them.</p>
-      </div>
-      <div id="ds-fields" class="hidden">
-        <label for="key-ds">DeepSeek API key</label>
-        <input type="password" id="key-ds" placeholder="sk-..." autocomplete="off" spellcheck="false">
-        <label for="model-ds">Model</label>
-        <select id="model-ds">
-          <option value="deepseek-reasoner" selected>deepseek-reasoner (R1)</option>
-          <option value="deepseek-chat">deepseek-chat (V3)</option>
-        </select>
-        <p class="hint">No key is stored — retype per session. Keys live only in memory.</p>
-      </div>
-      <div id="api-error"></div>
-    </section>
-
-    <section class="card">
-      <h2>3 · Read aloud &amp; speak <span class="native-badge">native · no API</span></h2>
-      <div class="row">
-        <select id="voice-select"></select>
-        <select id="rate-select">
+      <div class="speech-bar">
+        <span class="mini-label">Read aloud</span>
+        <select id="voice-select" title="Voice"></select>
+        <select id="rate-select" title="Speed">
           <option value="0.75">0.75×</option>
           <option value="1" selected>1×</option>
           <option value="1.25">1.25×</option>
           <option value="1.5">1.5×</option>
         </select>
+        <button id="btn-read" class="btn compact">▶ Read</button>
+        <button id="btn-pause" class="btn compact" disabled>⏸ Pause</button>
+        <button id="btn-stop" class="btn compact" disabled>⏹ Stop</button>
+        <span class="native-badge">native · no API</span>
       </div>
-      <div class="row">
-        <button id="btn-read" class="btn">▶ Read from marker</button>
-        <button id="btn-pause" class="btn" disabled>⏸ Pause</button>
-        <button id="btn-stop" class="btn" disabled>⏹ Stop</button>
+      <div id="reading" class="reading">
+        <div class="empty-state">
+          No text loaded.<br><br>
+          Press <b>✎ Text source</b> to paste text, or click the extension’s toolbar icon
+          while on a webpage to load its text automatically.
+        </div>
       </div>
-      <p class="hint">Reading aloud highlights each paragraph and advances your marker. Pause or stop wherever you want to react. Voice reactions use your system speech recognizer — nothing is uploaded.</p>
     </section>
-  </aside>
 
-  <!-- ===================== RIGHT: READER / ACTIVITY / COMPOSER ===================== -->
-  <main class="right-panel">
-    <div class="export-bar">
-      <span class="panel-title">Session (memory only — close tab to erase)</span>
-      <div class="spacer"></div>
-      <button id="export-json" disabled>Export JSON</button>
-      <button id="export-md" disabled>Export Markdown</button>
-    </div>
-
-    <div class="reading-toolbar">
-      <span id="read-pos" class="dim">No text loaded</span>
-      <div class="spacer"></div>
-      <button id="btn-react" class="btn primary big" disabled>✍ React here</button>
-    </div>
-    <div id="reading" class="reading">
-      <div class="empty-state">Paste text (left) or open via the toolbar icon on a webpage, then click the paragraph you've read up to.</div>
-    </div>
-
-    <div class="activity-head">Activity</div>
-    <div id="activity" class="activity">
-      <div class="empty-state" style="padding:20px;text-align:center;">Mark a paragraph, press “✍ React here”, and your reactions + AI evaluations will appear here.</div>
-    </div>
-
-    <div class="composer">
-      <div id="react-hint" class="dim">Reacting requires a marked paragraph and an API key.</div>
-      <textarea id="react-text" rows="2" placeholder="Type your reaction here — or click the mic and just say it…" disabled></textarea>
-      <div class="composer-btns">
-        <button id="btn-mic" class="btn" disabled title="Native speech-to-text"><span class="record-dot"></span>Mic</button>
-        <button id="btn-send" class="btn primary" disabled>Send</button>
+    <!-- activity: reactions + evaluations + composer -->
+    <section class="activity-col">
+      <div class="activity-head">Activity</div>
+      <div id="activity" class="activity">
+        <div class="empty-state">Click a paragraph you’ve read up to, press “✍ React here”, and your reactions + AI evaluations will appear here.</div>
       </div>
+      <div class="composer">
+        <div id="react-hint" class="dim">Mark a paragraph, then press “✍ React here”.</div>
+        <textarea id="react-text" rows="2" placeholder="Type your reaction here — or click the mic and just say it…" disabled></textarea>
+        <div class="composer-btns">
+          <button id="btn-mic" class="btn" disabled title="Native speech-to-text"><span class="record-dot"></span>Mic</button>
+          <button id="btn-send" class="btn primary" disabled>Send</button>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- ===================== SOURCE MODAL (manual text input) ===================== -->
+<div id="source-modal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Add source text</h3>
+      <button class="btn icon" data-close="source-modal" title="Close">✕</button>
     </div>
-  </main>
+    <p class="hint">Paste the article, lecture notes or chapter you want to study. It stays in memory only.</p>
+    <textarea id="paste-text" rows="10" placeholder="Paste any text — an article, lecture notes, a book chapter…" spellcheck="false"></textarea>
+    <div class="modal-actions">
+      <button class="btn" data-close="source-modal">Cancel</button>
+      <button id="load-paste" class="btn primary">Load text</button>
+    </div>
+    <p class="hint">Tip: to study a webpage instead, click the extension’s toolbar icon while on that page — its readable text loads automatically.</p>
+  </div>
+</div>
+
+<!-- ===================== SETTINGS MODAL ===================== -->
+<div id="settings-modal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Settings</h3>
+      <button class="btn icon" data-close="settings-modal" title="Close">✕</button>
+    </div>
+
+    <h4 class="modal-label">Appearance</h4>
+    <div class="seg">
+      <button id="theme-dark" class="seg-btn active">🌙 Dark</button>
+      <button id="theme-light" class="seg-btn">☀ Light</button>
+    </div>
+
+    <h4 class="modal-label">AI evaluation provider</h4>
+    <p class="hint">Keys are read on demand and never stored — retype per session.</p>
+
+    <div class="provider-card active" data-provider="openai">
+      <div class="pc-head">
+        <span class="pc-radio"></span>
+        <span class="pc-name">OpenAI</span>
+        <span class="pc-models">o3-mini · o4-mini · gpt-4o</span>
+      </div>
+      <label for="key-oai">API key</label>
+      <input type="password" id="key-oai" placeholder="sk-..." autocomplete="off" spellcheck="false">
+      <label for="model-oai">Model</label>
+      <select id="model-oai">
+        <option value="o3-mini" selected>o3-mini (reasoning)</option>
+        <option value="o4-mini">o4-mini (reasoning)</option>
+        <option value="gpt-4o">gpt-4o (fast)</option>
+      </select>
+      <p class="hint">Reasoning models fall back to gpt-4o automatically if your key rejects them.</p>
+    </div>
+
+    <div class="provider-card" data-provider="deepseek">
+      <div class="pc-head">
+        <span class="pc-radio"></span>
+        <span class="pc-name">DeepSeek</span>
+        <span class="pc-models">deepseek-reasoner · deepseek-chat</span>
+      </div>
+      <label for="key-ds">API key</label>
+      <input type="password" id="key-ds" placeholder="sk-..." autocomplete="off" spellcheck="false">
+      <label for="model-ds">Model</label>
+      <select id="model-ds">
+        <option value="deepseek-reasoner" selected>deepseek-reasoner (R1)</option>
+        <option value="deepseek-chat">deepseek-chat (V3)</option>
+      </select>
+      <p class="hint">OpenAI-compatible API — no audio endpoints, used here for reasoning only.</p>
+    </div>
+
+    <div id="api-error"></div>
+  </div>
 </div>
 
 <script src="app.js"></script>

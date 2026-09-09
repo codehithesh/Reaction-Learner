@@ -2,7 +2,7 @@
 // Reaction Learner — text-based Chrome extension app
 // Zero persistence: everything lives in this page's memory.
 // Speech = native Web Speech APIs (no transcription service).
-// Eval = BYOK OpenAI or DeepSeek reasoning model.
+// Eval = BYOK OpenAI or DeepSeek reasoning model (settings modal).
 // ============================================================
 
 'use strict';
@@ -31,21 +31,23 @@ const state = {
 // ---------- DOM ----------
 const $ = (id) => document.getElementById(id);
 const els = {
-  themeToggle: $('theme-toggle'), statusLine: $('status-line'), apiError: $('api-error'),
-  srcTabPaste: $('src-tab-paste'), srcTabGrab: $('src-tab-grab'),
-  srcPanePaste: $('src-pane-paste'), srcPaneGrab: $('src-pane-grab'),
-  pasteText: $('paste-text'), loadPaste: $('load-paste'),
-  btnGrabAgain: $('btn-grab-again'), grabMeta: $('grab-meta'),
-  provOai: $('prov-oai'), provDs: $('prov-ds'),
-  oaiFields: $('oai-fields'), dsFields: $('ds-fields'),
-  keyOai: $('key-oai'), keyDs: $('key-ds'),
-  modelOai: $('model-oai'), modelDs: $('model-ds'),
+  statusLine: $('status-line'),
+  btnSettings: $('btn-settings'),
+  exportJson: $('export-json'), exportMd: $('export-md'),
+  btnSource: $('btn-source'), btnGrabNow: $('btn-grab-now'),
+  readPos: $('read-pos'), btnReact: $('btn-react'),
   voiceSelect: $('voice-select'), rateSelect: $('rate-select'),
   btnRead: $('btn-read'), btnPause: $('btn-pause'), btnStop: $('btn-stop'),
-  exportJson: $('export-json'), exportMd: $('export-md'),
-  readPos: $('read-pos'), btnReact: $('btn-react'), reading: $('reading'),
+  reading: $('reading'),
   activity: $('activity'), reactHint: $('react-hint'),
   reactText: $('react-text'), btnMic: $('btn-mic'), btnSend: $('btn-send'),
+  // modals
+  sourceModal: $('source-modal'), settingsModal: $('settings-modal'),
+  pasteText: $('paste-text'), loadPaste: $('load-paste'),
+  themeDark: $('theme-dark'), themeLight: $('theme-light'),
+  keyOai: $('key-oai'), keyDs: $('key-ds'),
+  modelOai: $('model-oai'), modelDs: $('model-ds'),
+  apiError: $('api-error'),
 };
 
 // ---------- helpers ----------
@@ -65,29 +67,73 @@ function slug(s) {
 }
 function scrollBottom(el) { el.scrollTop = el.scrollHeight; }
 
-// ---------- theme (memory only) ----------
-els.themeToggle.addEventListener('click', () => {
-  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', next);
-  els.themeToggle.textContent = next === 'dark' ? '🌙' : '☀';
+// ============================================================
+// MODALS (generic)
+// ============================================================
+function openModal(el) { el.classList.remove('hidden'); }
+function closeModal(el) { el.classList.add('hidden'); }
+
+document.querySelectorAll('[data-close]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const overlay = document.getElementById(btn.dataset.close);
+    if (overlay) closeModal(overlay);
+  });
+});
+document.querySelectorAll('.modal-overlay').forEach((overlay) => {
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(overlay); });
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay:not(.hidden)').forEach((ov) => closeModal(ov));
+  }
 });
 
 // ============================================================
-// SOURCE: paste or grabbed page text
+// SETTINGS: theme + provider cards
 // ============================================================
-function setSrcTab(paste) {
-  els.srcTabPaste.classList.toggle('active', paste);
-  els.srcTabGrab.classList.toggle('active', !paste);
-  els.srcPanePaste.classList.toggle('hidden', !paste);
-  els.srcPaneGrab.classList.toggle('hidden', paste);
+function applyTheme(name) {
+  document.documentElement.setAttribute('data-theme', name);
+  els.themeDark.classList.toggle('active', name === 'dark');
+  els.themeLight.classList.toggle('active', name === 'light');
 }
-els.srcTabPaste.addEventListener('click', () => setSrcTab(true));
-els.srcTabGrab.addEventListener('click', () => setSrcTab(false));
+els.btnSettings.addEventListener('click', () => openModal(els.settingsModal));
+els.themeDark.addEventListener('click', () => applyTheme('dark'));
+els.themeLight.addEventListener('click', () => applyTheme('light'));
+
+// Provider selection — stacked cards, click a card to choose it
+els.settingsModal.addEventListener('click', (e) => {
+  const card = e.target.closest('.provider-card');
+  if (card) setProvider(card.dataset.provider);
+});
+
+function setProvider(prov) {
+  state.provider = prov;
+  document.querySelectorAll('.provider-card').forEach((card) => {
+    card.classList.toggle('active', card.dataset.provider === prov);
+  });
+  setApiError('');
+}
+[els.keyOai, els.keyDs].forEach((el) => el.addEventListener('input', () => setApiError('')));
+
+function activeProvider() {
+  const key = state.provider === 'openai' ? els.keyOai.value.trim() : els.keyDs.value.trim();
+  const model = state.provider === 'openai' ? els.modelOai.value : els.modelDs.value;
+  return { name: state.provider, key, model };
+}
+
+// ============================================================
+// SOURCE: paste (modal) or grabbed page text
+// ============================================================
+els.btnSource.addEventListener('click', () => {
+  openModal(els.sourceModal);
+  els.pasteText.focus();
+});
 
 els.loadPaste.addEventListener('click', () => {
   const text = els.pasteText.value.trim();
   if (!text) { setStatus('Paste some text first', 'error'); return; }
   loadSource(text, 'Pasted text', '');
+  closeModal(els.sourceModal);
 });
 
 async function grabActiveTab() {
@@ -111,7 +157,7 @@ async function grabActiveTab() {
     setStatus('Could not grab: ' + (err.message || err) + ' — click the toolbar icon while on the page instead.', 'error');
   }
 }
-els.btnGrabAgain.addEventListener('click', grabActiveTab);
+els.btnGrabNow.addEventListener('click', grabActiveTab);
 
 async function consumePendingGrab() {
   if (!isExt) return;
@@ -125,8 +171,7 @@ async function consumePendingGrab() {
         loadSource(pendingGrab.text, pendingGrab.title || '', pendingGrab.url || '');
         setStatus('Loaded text from the page you opened this from', 'success');
       } else {
-        setStatus('Nothing readable was found on that page — paste text instead.', 'error');
-        setSrcTab(true);
+        setStatus('Nothing readable was found on that page — use “✎ Text source” to paste instead.', 'error');
       }
     } else if (pendingGrab) {
       chrome.storage.session.remove('pendingGrab'); // stale token
@@ -144,16 +189,15 @@ function loadSource(text, title, url) {
   state.pending = null;
   state.voiceTyped = false;
   els.reactText.value = '';
-  els.grabMeta.textContent = '';
 
   state.prefixLen = [];
   let acc = 0;
   for (const p of state.paras) { acc += p.text.length + 2; state.prefixLen.push(acc); }
 
   renderReading();
-  setStatus(`Loaded ${state.paras.length} paragraphs (${fmtCount(state.totalChars)} chars)`, 'success');
+  const who = state.sourceTitle && state.sourceTitle !== 'Pasted text' ? `“${state.sourceTitle}”` : 'text';
+  setStatus(`Loaded ${who}: ${state.paras.length} paragraphs, ${fmtCount(state.totalChars)} chars`, 'success');
   els.pasteText.value = '';
-  if (title && title !== 'Pasted text') els.grabMeta.textContent = title + (url ? ' — ' + url : '');
   updateReadPos();
   updateControls();
 }
@@ -209,7 +253,6 @@ function setMarker(i) {
 }
 
 function renderReadingState() {
-  if (!els.reading) return;
   const readingNow = state.tts.active && state.tts.idx >= 0 ? state.tts.idx : -1;
   els.reading.querySelectorAll('p.para').forEach((el) => {
     const i = parseInt(el.dataset.p, 10);
@@ -364,29 +407,6 @@ els.btnPause.addEventListener('click', () => {
 els.btnStop.addEventListener('click', () => stopTTS(false));
 
 // ============================================================
-// PROVIDER: OpenAI or DeepSeek (BYOK, in-memory)
-// ============================================================
-function setProvider(prov) {
-  state.provider = prov;
-  const oai = prov === 'openai';
-  els.provOai.classList.toggle('active', oai);
-  els.provDs.classList.toggle('active', !oai);
-  els.oaiFields.classList.toggle('hidden', !oai);
-  els.dsFields.classList.toggle('hidden', oai);
-  setApiError('');
-  updateControls();
-}
-els.provOai.addEventListener('click', () => setProvider('openai'));
-els.provDs.addEventListener('click', () => setProvider('deepseek'));
-[els.keyOai, els.keyDs].forEach((el) => el.addEventListener('input', () => setApiError('')));
-
-function activeProvider() {
-  const key = state.provider === 'openai' ? els.keyOai.value.trim() : els.keyDs.value.trim();
-  const model = state.provider === 'openai' ? els.modelOai.value : els.modelDs.value;
-  return { name: state.provider, key, model };
-}
-
-// ============================================================
 // NATIVE STT — voice reactions (no API)
 // ============================================================
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
@@ -465,7 +485,7 @@ els.btnSend.addEventListener('click', async () => {
   const prov = activeProvider();
   if (!prov.key) {
     setApiError(`Enter your ${prov.name === 'openai' ? 'OpenAI' : 'DeepSeek'} API key to evaluate`);
-    setStatus('API key required for evaluation', 'error');
+    setStatus('API key required for evaluation — open ⚙ Settings', 'error');
     return;
   }
 
@@ -522,7 +542,7 @@ function updateControls() {
   } else if (state.busyEval) {
     els.reactHint.textContent = 'Evaluating your reaction…';
   } else {
-    els.reactHint.textContent = 'Mark a paragraph, then press “✍ React here”.';
+    els.reactHint.textContent = 'Click a paragraph you’ve read up to, then press “✍ React here”.';
   }
 }
 
@@ -854,5 +874,6 @@ els.exportMd.addEventListener('click', () => {
 // ============================================================
 // init
 // ============================================================
+applyTheme('dark');
 consumePendingGrab();
 updateControls();

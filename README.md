@@ -41,20 +41,22 @@ icons/          16/48/128 placeholder icons
 1. Open `chrome://extensions`
 2. Enable **Developer mode** (top-right)
 3. **Load unpacked** → select this folder
-4. Click the Reaction Learner toolbar icon on any webpage (or just open
-   `index.html` inside the extension and paste text)
+4. Click the Reaction Learner toolbar icon on any webpage, or open
+   `index.html` inside the extension and press **✎ Text source** to paste text
 
 ## How to use
 
-1. **Load text** — paste it, or open the extension from a webpage you're reading.
-2. **Read** — optionally press **▶ Read from marker** to have it read aloud
-   (native voices, pick yours in the dropdown). The marker advances as it reads.
-3. **Mark** — click the paragraph you've read up to (dimmed text = not read yet).
+1. **Load text** — press **✎ Text source** and paste it, or click the extension's
+   toolbar icon on a webpage to load its readable text automatically.
+2. **Read** — optionally hit **▶ Read** in the reader bar for native read-aloud
+   (pick an OS voice). The marker advances as it reads.
+3. **Mark** — click the paragraph you've read up to in the script pane
+   (dimmed text = not read yet).
 4. **✍ React here** — type or press the mic and speak. Only what you read
    (¶ 0 → marker) is sent as context.
-5. **Evaluate** — pick **DeepSeek** or **OpenAI** on the left, paste your key,
-   choose a model, hit **Send**. Evaluation scores + suggested summary appear in
-   Activity.
+5. **Evaluate** — open **⚙ Settings** (top bar), pick the **DeepSeek** or
+   **OpenAI** card, paste the key, choose a model, hit **Send**. Scores +
+   suggested summary appear in the Activity column.
 6. **Export** — JSON/Markdown anytime while the session is open.
 
 ## Privacy
