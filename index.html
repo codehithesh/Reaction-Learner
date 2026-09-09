@@ -106,47 +106,19 @@
       <button class="btn icon" data-close="settings-modal" title="Close">✕</button>
     </div>
 
-    <h4 class="modal-label">Appearance</h4>
-    <div class="seg">
-      <button id="theme-dark" class="seg-btn active">🌙 Dark</button>
-      <button id="theme-light" class="seg-btn">☀ Light</button>
+    <div class="appearance-row">
+      <h4 class="modal-label appearance-label">Appearance</h4>
+      <div class="seg">
+        <button id="theme-system" class="seg-btn active">🖥 System</button>
+        <button id="theme-light" class="seg-btn">☀ Light</button>
+        <button id="theme-dark" class="seg-btn">🌙 Dark</button>
+      </div>
     </div>
 
     <h4 class="modal-label">AI evaluation provider</h4>
-    <p class="hint">Keys are kept in this extension’s private browser storage (nothing else can read them) and are sent only to your chosen provider when you evaluate. “Forget saved keys” erases them from the browser completely.</p>
+    <p class="hint">Pick a provider and type its API key. Keys are kept in this extension’s private browser storage (nothing else can read them) and are sent only to that provider when you evaluate. “Forget saved keys” erases them from the browser completely.</p>
 
-    <div class="provider-card active" data-provider="openai">
-      <div class="pc-head">
-        <span class="pc-radio"></span>
-        <span class="pc-name">OpenAI</span>
-        <span class="pc-models">o3-mini · o4-mini · gpt-4o</span>
-      </div>
-      <label for="key-oai">API key</label>
-      <input type="password" id="key-oai" placeholder="sk-..." autocomplete="off" spellcheck="false">
-      <label for="model-oai">Model</label>
-      <select id="model-oai">
-        <option value="o3-mini" selected>o3-mini (reasoning)</option>
-        <option value="o4-mini">o4-mini (reasoning)</option>
-        <option value="gpt-4o">gpt-4o (fast)</option>
-      </select>
-      <p class="hint">Reasoning models fall back to gpt-4o automatically if your key rejects them.</p>
-    </div>
-
-    <div class="provider-card" data-provider="deepseek">
-      <div class="pc-head">
-        <span class="pc-radio"></span>
-        <span class="pc-name">DeepSeek</span>
-        <span class="pc-models">deepseek-reasoner · deepseek-chat</span>
-      </div>
-      <label for="key-ds">API key</label>
-      <input type="password" id="key-ds" placeholder="sk-..." autocomplete="off" spellcheck="false">
-      <label for="model-ds">Model</label>
-      <select id="model-ds">
-        <option value="deepseek-reasoner" selected>deepseek-reasoner (R1)</option>
-        <option value="deepseek-chat">deepseek-chat (V3)</option>
-      </select>
-      <p class="hint">OpenAI-compatible API — no audio endpoints, used here for reasoning only.</p>
-    </div>
+    <div id="provider-list"></div>
 
     <div class="forget-row">
       <button id="btn-forget-keys" class="btn compact" disabled>🗑 Forget saved keys</button>

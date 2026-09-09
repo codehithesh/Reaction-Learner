@@ -4,7 +4,7 @@
 // BYOK API keys may optionally be saved to chrome.storage.local —
 // extension-private, browser-local — and are erased on request.
 // Speech = native Web Speech APIs (no transcription service).
-// Eval = BYOK OpenAI or DeepSeek reasoning model (settings modal).
+// Eval = BYOK OpenAI · Claude · Gemini · DeepSeek · Kimi · Mistral.
 // ============================================================
 
 'use strict';
@@ -49,9 +49,8 @@ const els = {
   // modals
   sourceModal: $('source-modal'), settingsModal: $('settings-modal'),
   pasteText: $('paste-text'), loadPaste: $('load-paste'),
-  themeDark: $('theme-dark'), themeLight: $('theme-light'),
-  keyOai: $('key-oai'), keyDs: $('key-ds'),
-  modelOai: $('model-oai'), modelDs: $('model-ds'),
+  themeSystem: $('theme-system'), themeLight: $('theme-light'), themeDark: $('theme-dark'),
+  providerList: $('provider-list'),
   apiError: $('api-error'),
   btnForgetKeys: $('btn-forget-keys'),
 };
@@ -116,19 +115,163 @@ els.btnCloseActivity.addEventListener('click', closeActivity);
 // ============================================================
 // SETTINGS: theme + provider cards
 // ============================================================
-function applyTheme(name) {
-  document.documentElement.setAttribute('data-theme', name);
-  els.themeDark.classList.toggle('active', name === 'dark');
-  els.themeLight.classList.toggle('active', name === 'light');
+// Appearance: follow the OS, or force light / dark. The choice is in-memory.
+const darkMQ = window.matchMedia('(prefers-color-scheme: dark)');
+let themePref = 'system'; // 'system' | 'light' | 'dark'
+function effectiveTheme() {
+  if (themePref === 'light') return 'light';
+  if (themePref === 'dark') return 'dark';
+  return darkMQ.matches ? 'dark' : 'light';
+}
+function renderTheme() {
+  document.documentElement.setAttribute('data-theme', effectiveTheme());
+  els.themeSystem.classList.toggle('active', themePref === 'system');
+  els.themeLight.classList.toggle('active', themePref === 'light');
+  els.themeDark.classList.toggle('active', themePref === 'dark');
+}
+function setThemePref(p) {
+  themePref = p;
+  renderTheme();
 }
 els.btnSettings.addEventListener('click', () => openModal(els.settingsModal));
-els.themeDark.addEventListener('click', () => applyTheme('dark'));
-els.themeLight.addEventListener('click', () => applyTheme('light'));
+els.themeSystem.addEventListener('click', () => setThemePref('system'));
+els.themeLight.addEventListener('click', () => setThemePref('light'));
+els.themeDark.addEventListener('click', () => setThemePref('dark'));
+if (darkMQ.addEventListener) darkMQ.addEventListener('change', renderTheme); // live OS switch
 
-// Provider selection — stacked cards, click a card to choose it
+// ============================================================
+// PROVIDERS — BYOK evaluation backends
+// ============================================================
+// style 'chat'     = OpenAI-compatible /chat/completions (Bearer auth)
+// style 'messages' = Anthropic Messages API (anthropic-version header)
+// json / temp      = whether the API accepts response_format + temperature;
+//                    callChat retries bare if a model rejects either.
+const PROVIDERS = [
+  {
+    id: 'openai', label: 'OpenAI',
+    endpoint: 'https://api.openai.com/v1/chat/completions',
+    style: 'chat', json: true, temp: true,
+    fallback: 'gpt-4o',
+    noTemp: (m) => /^o[134]/.test(m),
+    hint: 'Reasoning models fall back to gpt-4o automatically if your key rejects them.',
+    ph: 'sk-...',
+    models: [
+      { v: 'o3-mini', l: 'o3-mini (reasoning)' },
+      { v: 'o4-mini', l: 'o4-mini (reasoning)' },
+      { v: 'gpt-4o', l: 'gpt-4o (fast)' },
+    ],
+  },
+  {
+    id: 'anthropic', label: 'Claude',
+    endpoint: 'https://api.anthropic.com/v1/messages',
+    style: 'messages', json: false, temp: false,
+    fallback: 'claude-sonnet-5',
+    def: 'claude-sonnet-5',
+    hint: 'Key from console.anthropic.com — JSON is requested inside the prompt.',
+    ph: 'sk-ant-...',
+    models: [
+      { v: 'claude-fable-5-1', l: 'Fable 5.1 — deepest reasoning' },
+      { v: 'claude-opus-5', l: 'Opus 5 — strongest overall' },
+      { v: 'claude-sonnet-5', l: 'Sonnet 5 — speed + intelligence' },
+      { v: 'claude-haiku-4-5-20251001', l: 'Haiku 4.5 — fastest' },
+    ],
+  },
+  {
+    id: 'google', label: 'Gemini',
+    endpoint: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+    style: 'chat', json: true, temp: false,
+    fallback: 'gemini-2.5-flash',
+    hint: 'API key from Google AI Studio (aistudio.google.com/apikey).',
+    ph: 'AIza...',
+    models: [
+      { v: 'gemini-3.8-flash', l: 'Gemini 3.8 Flash' },
+      { v: 'gemini-3.1-pro', l: 'Gemini 3.1 Pro' },
+      { v: 'gemini-3-flash', l: 'Gemini 3 Flash' },
+      { v: 'gemini-2.5-flash', l: 'Gemini 2.5 Flash' },
+    ],
+  },
+  {
+    id: 'deepseek', label: 'DeepSeek',
+    endpoint: 'https://api.deepseek.com/chat/completions',
+    style: 'chat', json: true, temp: true,
+    fallback: 'deepseek-chat',
+    noTemp: (m) => m === 'deepseek-reasoner',
+    noJson: (m) => m === 'deepseek-reasoner',
+    hint: 'OpenAI-compatible reasoning API. Reasoner falls back to deepseek-chat.',
+    ph: 'sk-...',
+    models: [
+      { v: 'deepseek-reasoner', l: 'deepseek-reasoner (R1)' },
+      { v: 'deepseek-chat', l: 'deepseek-chat (V3)' },
+    ],
+  },
+  {
+    id: 'moonshot', label: 'Kimi',
+    endpoint: 'https://api.moonshot.ai/v1/chat/completions',
+    style: 'chat', json: true, temp: true,
+    fallback: 'kimi-k2.6',
+    noTemp: (m) => m === 'kimi-k3',
+    hint: 'International endpoint (api.moonshot.ai).',
+    ph: 'sk-...',
+    models: [
+      { v: 'kimi-k2.6', l: 'Kimi K2.6 (reasoning)' },
+      { v: 'kimi-k3', l: 'Kimi K3 (1M context)' },
+    ],
+  },
+  {
+    id: 'mistral', label: 'Mistral',
+    endpoint: 'https://api.mistral.ai/v1/chat/completions',
+    style: 'chat', json: true, temp: true,
+    fallback: 'mistral-small-latest',
+    hint: 'Key from console.mistral.ai.',
+    ph: '...',
+    models: [
+      { v: 'mistral-large-latest', l: 'Mistral Large' },
+      { v: 'mistral-small-latest', l: 'Mistral Small (fast)' },
+    ],
+  },
+];
+const PROVIDER_MAP = Object.fromEntries(PROVIDERS.map((p) => [p.id, p]));
+
+function providerInput(id) { return document.getElementById('key-' + id); }
+function providerModel(id) { return document.getElementById('model-' + id); }
+
+function renderProviderCards() {
+  els.providerList.innerHTML = PROVIDERS.map((p) => {
+    const def = p.def || p.models[0].v;
+    const opts = p.models.map((m) =>
+      `<option value="${m.v}"${m.v === def ? ' selected' : ''}>${m.l}</option>`
+    ).join('');
+    return `
+      <div class="provider-card${p.id === state.provider ? ' active' : ''}" data-provider="${p.id}">
+        <div class="pc-head">
+          <span class="pc-radio"></span>
+          <span class="pc-name">${p.label}</span>
+          <span class="pc-models">${p.models.map((m) => m.l).join(' · ')}</span>
+        </div>
+        <label for="key-${p.id}">API key</label>
+        <input type="password" id="key-${p.id}" placeholder="${p.ph || 'Paste your API key'}" autocomplete="off" spellcheck="false">
+        <label for="model-${p.id}">Model</label>
+        <select id="model-${p.id}">${opts}</select>
+        ${p.hint ? `<p class="hint">${p.hint}</p>` : ''}
+      </div>`;
+  }).join('\n');
+}
+
+// Pick a provider: click its header, or focus its key field / model list.
 els.settingsModal.addEventListener('click', (e) => {
+  const head = e.target.closest('.pc-head');
+  if (head) setProvider(head.closest('.provider-card').dataset.provider);
+});
+els.settingsModal.addEventListener('focusin', (e) => {
   const card = e.target.closest('.provider-card');
-  if (card) setProvider(card.dataset.provider);
+  if (card && e.target.matches('input, select')) setProvider(card.dataset.provider);
+});
+els.settingsModal.addEventListener('input', (e) => {
+  if (e.target.matches('input[type="password"]')) {
+    setApiError('');
+    updateForgetBtn();
+    scheduleKeySave();
+  }
 });
 
 function setProvider(prov) {
@@ -138,16 +281,15 @@ function setProvider(prov) {
   });
   setApiError('');
 }
-[els.keyOai, els.keyDs].forEach((el) => el.addEventListener('input', () => {
-  setApiError('');
-  updateForgetBtn();
-  scheduleKeySave();
-}));
 
 function activeProvider() {
-  const key = state.provider === 'openai' ? els.keyOai.value.trim() : els.keyDs.value.trim();
-  const model = state.provider === 'openai' ? els.modelOai.value : els.modelDs.value;
-  return { name: state.provider, key, model };
+  const cfg = PROVIDER_MAP[state.provider];
+  return {
+    name: cfg.id,
+    label: cfg.label,
+    key: providerInput(cfg.id).value.trim(),
+    model: providerModel(cfg.id).value,
+  };
 }
 
 // ============================================================
@@ -160,7 +302,10 @@ function activeProvider() {
 let saveKeysTimer = null;
 
 function updateForgetBtn() {
-  const anyTyped = !!(els.keyOai.value.trim() || els.keyDs.value.trim());
+  const anyTyped = PROVIDERS.some((p) => {
+    const el = providerInput(p.id);
+    return !!el && !!el.value.trim();
+  });
   els.btnForgetKeys.disabled = !anyTyped;
 }
 
@@ -173,21 +318,19 @@ function scheduleKeySave() {
 async function persistKeys() {
   if (!isExt) return;
   const keys = {};
-  const oai = els.keyOai.value.trim();
-  const ds = els.keyDs.value.trim();
-  if (oai) keys.openai = oai;
-  if (ds) keys.deepseek = ds;
+  for (const p of PROVIDERS) {
+    const v = providerInput(p.id).value.trim();
+    if (v) keys[p.id] = v;
+  }
   try {
     if (Object.keys(keys).length) await chrome.storage.local.set({ rlApiKeys: keys });
     else await chrome.storage.local.remove('rlApiKeys'); // emptied → gone for good
   } catch { /* storage unavailable — stay in-memory only */ }
-  updateForgetBtn();
 }
 
 async function forgetKeys() {
   clearTimeout(saveKeysTimer);
-  els.keyOai.value = '';
-  els.keyDs.value = '';
+  for (const p of PROVIDERS) providerInput(p.id).value = '';
   setApiError('');
   updateForgetBtn();
   if (isExt) {
@@ -202,9 +345,11 @@ async function loadSavedKeys() {
   try {
     const { rlApiKeys } = await chrome.storage.local.get('rlApiKeys');
     if (!rlApiKeys) return;
-    if (rlApiKeys.openai) els.keyOai.value = rlApiKeys.openai;
-    if (rlApiKeys.deepseek) els.keyDs.value = rlApiKeys.deepseek;
-    if (rlApiKeys.openai || rlApiKeys.deepseek) {
+    let any = false;
+    for (const p of PROVIDERS) {
+      if (rlApiKeys[p.id]) { providerInput(p.id).value = rlApiKeys[p.id]; any = true; }
+    }
+    if (any) {
       updateForgetBtn();
       setStatus('Saved API keys restored — open ⚙ Settings to review or erase them', 'success');
     }
@@ -333,7 +478,7 @@ function renderReadingState() {
 }
 
 function updateReadPos() {
-  if (!state.paras.length) { els.readPos.textContent = ''; return; }
+  if (!state.paras.length) { els.readPos.textContent = 'No text loaded'; return; }
   if (state.markerP < 0) {
     els.readPos.textContent = `0 / ${state.paras.length} paragraphs — click a paragraph to set your spot`;
     return;
@@ -554,7 +699,7 @@ els.btnSend.addEventListener('click', async () => {
 
   const prov = activeProvider();
   if (!prov.key) {
-    setApiError(`Enter your ${prov.name === 'openai' ? 'OpenAI' : 'DeepSeek'} API key to evaluate`);
+    setApiError(`Enter your ${prov.label} API key to evaluate`);
     setStatus('API key required for evaluation — open ⚙ Settings', 'error');
     return;
   }
@@ -618,41 +763,93 @@ function updateControls() {
 }
 
 // ============================================================
-// EVALUATION — BYOK chat completions (OpenAI / DeepSeek)
+// EVALUATION — BYOK chat completions (multi-provider)
 // ============================================================
-const ENDPOINTS = {
-  openai: 'https://api.openai.com/v1/chat/completions',
-  deepseek: 'https://api.deepseek.com/chat/completions',
-};
-const FALLBACK_MODEL = { openai: 'gpt-4o', deepseek: 'deepseek-chat' };
-const isReasoning = (m) => /^o[134]/.test(m) || m === 'deepseek-reasoner';
+async function callChat(prov, model, messages) {
+  const cfg = PROVIDER_MAP[prov.name];
+  const headers = { 'content-type': 'application/json' };
 
-async function callChat(prov, model, messages, allowFallback = true) {
-  const body = {
-    model,
-    messages,
-    ...(isReasoning(model) ? {} : { temperature: 0.2 }),
-    ...((prov.name === 'deepseek' && model === 'deepseek-reasoner')
-      ? {}
-      : { response_format: { type: 'json_object' } }),
-  };
-  const resp = await fetch(ENDPOINTS[prov.name], {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${prov.key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  if (!resp.ok) {
-    const txt = await resp.text();
-    const err = new Error(`${prov.name} ${resp.status}: ${txt.slice(0, 400)}`);
-    err.status = resp.status;
-    err.body = txt;
-    // e.g. reasoning model not on this account, or param unsupported → retry on the safe model
-    if (allowFallback && resp.status === 400 && /model|response_format|temperature/i.test(txt)) {
-      return callChat(prov, FALLBACK_MODEL[prov.name], messages, false);
+  // ---- Anthropic Messages API (different wire format) ----
+  if (cfg.style === 'messages') {
+    const system = messages.filter((m) => m.role === 'system').map((m) => m.content).join('\n\n');
+    const conv = messages.filter((m) => m.role !== 'system')
+      .map((m) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content }));
+    const call = async (m) => {
+      const resp = await fetch(cfg.endpoint, {
+        method: 'POST',
+        headers: {
+          ...headers,
+          'authorization': 'Bearer ' + prov.key,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: m,
+          max_tokens: 8192,
+          ...(system ? { system } : {}),
+          messages: conv,
+        }),
+      });
+      if (!resp.ok) {
+        const txt = await resp.text();
+        const err = new Error(`${cfg.label} ${resp.status}: ${txt.slice(0, 400)}`);
+        err.status = resp.status; err.body = txt;
+        throw err;
+      }
+      const data = await resp.json();
+      const text = (data.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('');
+      return { text };
+    };
+    try { return await call(model); }
+    catch (firstErr) {
+      if (firstErr.status === 400 && cfg.fallback && cfg.fallback !== model) {
+        try { return await call(cfg.fallback); } catch { /* keep original error */ }
+      }
+      throw firstErr;
     }
-    throw err;
   }
-  return resp.json();
+
+  // ---- OpenAI-compatible chat completions ----
+  const wantsJson = !!cfg.json && !(cfg.noJson ? cfg.noJson(model) : false);
+  const wantsTemp = !!cfg.temp && !(cfg.noTemp ? cfg.noTemp(model) : false);
+  const attempt = async (m, jsonFmt, temp) => {
+    const body = {
+      model: m,
+      messages,
+      ...(temp ? { temperature: 0.2 } : {}),
+      ...(jsonFmt ? { response_format: { type: 'json_object' } } : {}),
+    };
+    const resp = await fetch(cfg.endpoint, {
+      method: 'POST',
+      headers: { ...headers, 'authorization': 'Bearer ' + prov.key },
+      body: JSON.stringify(body),
+    });
+    if (!resp.ok) {
+      const txt = await resp.text();
+      const err = new Error(`${cfg.label} ${resp.status}: ${txt.slice(0, 400)}`);
+      err.status = resp.status; err.body = txt;
+      throw err;
+    }
+    const data = await resp.json();
+    const text = (data.choices && data.choices[0] && data.choices[0].message)
+      ? (data.choices[0].message.content || '')
+      : '';
+    return { text };
+  };
+  try {
+    return await attempt(model, wantsJson, wantsTemp);
+  } catch (firstErr) {
+    let e = firstErr;
+    // A param (temperature / response_format) this model rejects → retry bare.
+    if (e.status === 400 && (wantsJson || wantsTemp)) {
+      try { return await attempt(model, false, false); } catch (e2) { e = e2; }
+    }
+    // A model your account can't use → retry the provider's safe fallback, bare.
+    if (e.status === 400 && cfg.fallback && cfg.fallback !== model) {
+      try { return await attempt(cfg.fallback, false, false); } catch { /* keep original error */ }
+    }
+    throw e;
+  }
 }
 
 function parseJsonLoose(text) {
@@ -700,7 +897,7 @@ async function runEvaluation(reaction, prov) {
   sp.className = 'loader';
   wait.appendChild(sp);
   wait.appendChild(document.createTextNode(
-    `Scoring with ${prov.name} (${prov.model})…`
+    `Scoring with ${prov.label} (${prov.model})…`
   ));
   card.appendChild(head0);
   card.appendChild(wait);
@@ -716,7 +913,7 @@ async function runEvaluation(reaction, prov) {
       : 'Source text (through the paragraph the learner reacted at):';
 
     const systemPrompt =
-      'You are a strict but fair tutor. A learner reacted to a text passage. Compare their reaction against the source text and score it. Return ONLY valid JSON — no markdown fences, no commentary. (The word "json" is required by the API.)';
+      'You are a strict but fair tutor. A learner reacted to a text passage. Compare their reaction against the source text and score it. Return ONLY valid JSON matching the requested schema — no markdown fences, no commentary, no extra text.';
     const userPrompt = `${sliceIntro}
 ---
 ${reaction.sliceText}
@@ -733,21 +930,19 @@ Then "suggested_better_summary": write the concise summary the learner should ha
 Return JSON exactly like:
 ${schema}`;
 
-    const data = await callChat(prov, prov.model, [
+    const out = await callChat(prov, prov.model, [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt },
     ]);
-    const content = data && data.choices && data.choices[0] && data.choices[0].message
-      ? data.choices[0].message.content
-      : '';
-    const parsed = parseJsonLoose(content);
+    const parsed = parseJsonLoose(out.text);
     const record = {
       reactionId: reaction.id,
       provider: prov.name,
+      providerLabel: prov.label,
       model: prov.model,
       ok: true,
       result: parsed,
-      raw: content,
+      raw: out.text,
     };
     state.evals.push(record);
     card.innerHTML = '';
@@ -757,6 +952,7 @@ ${schema}`;
     state.evals.push({
       reactionId: reaction.id,
       provider: prov.name,
+      providerLabel: prov.label,
       model: prov.model,
       ok: false,
       error: err.message || String(err),
@@ -782,7 +978,7 @@ function buildEvalDOM(record, reaction) {
 
   const head = document.createElement('div');
   head.className = 'bubble-header';
-  head.textContent = `Evaluation — via ${record.provider} ${record.model}`;
+  head.textContent = `Evaluation — via ${record.providerLabel || record.provider} ${record.model}`;
   wrap.appendChild(head);
 
   const grid = document.createElement('div');
@@ -945,7 +1141,8 @@ els.exportMd.addEventListener('click', () => {
 // ============================================================
 // init
 // ============================================================
-applyTheme('dark');
+renderTheme();
+renderProviderCards();
 consumePendingGrab();
 loadSavedKeys();
 updateControls();

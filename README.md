@@ -17,7 +17,7 @@ JSON/Markdown export happens in-browser.
 | Position marker (T) | Click the paragraph you've read up to; the text before it becomes the evaluation context |
 | Reaction | Type it, or speak it — **native** `webkitSpeechRecognition`, no speech API, nothing uploaded |
 | Read aloud | **Native** `speechSynthesis` with OS voices, highlight + auto-advancing marker, pause/stop to react |
-| Evaluation | BYOK **DeepSeek** (`deepseek-reasoner` / `deepseek-chat`) **or** OpenAI (`o3-mini` / `o4-mini` / `gpt-4o`); reasoning models fall back automatically |
+| Evaluation | BYOK across **OpenAI** (`o3-mini` / `o4-mini` / `gpt-4o`), **Claude** (`claude-sonnet-5` / `claude-opus-5` / `claude-haiku-4-5` / `claude-fable-5-1`), **Google Gemini** (`gemini-3.8-flash` / `gemini-3.1-pro` / …), **DeepSeek** (`deepseek-reasoner` / `deepseek-chat`), **Kimi** (`kimi-k3` / `kimi-k2.6`) and **Mistral**; unsupported models/params fall back automatically |
 | Scoring | Accuracy · Understanding · Coverage · Unsupported inference · Incorrect claims · Missed points · Overall — plus a **suggested better summary** |
 | Export | JSON + Markdown downloaded directly from the browser |
 | Storage | Session data: none — page memory only. API keys: optional, extension-private `chrome.storage.local`, deleted completely by “Forget saved keys” |
@@ -56,9 +56,9 @@ icons/          16/48/128 placeholder icons
    (dimmed text = not read yet).
 4. **✍ React here** — type or press the mic and speak. Only what you read
    (¶ 0 → marker) is sent as context.
-5. **Evaluate** — open **⚙ Settings** (top bar), pick the **DeepSeek** or
-   **OpenAI** card, paste the key, choose a model, hit **Send**. Scores +
-   suggested summary appear in the Activity column.
+5. **Evaluate** — open **⚙ Settings** (top bar), pick a provider card
+   (OpenAI, Claude, Gemini, DeepSeek, Kimi, Mistral), paste its key, choose a
+   model, hit **Send**. Scores + suggested summary appear in the Activity column.
 6. **Export** — JSON/Markdown anytime while the session is open.
 
 ## Privacy
@@ -66,8 +66,10 @@ icons/          16/48/128 placeholder icons
 - Source text, reactions, and evaluations exist **only in page memory**.
 - Speech-to-text and text-to-speech are **native browser features** — audio and
   speech never leave your machine.
-- The only network calls go from your chosen API key to `api.openai.com` or
-  `api.deepseek.com` (chat completions) when you run an evaluation.
+- The only network calls go from your chosen key to that provider's API
+  endpoint (e.g. `api.openai.com`, `api.anthropic.com`,
+  `generativelanguage.googleapis.com`, `api.deepseek.com`, `api.moonshot.ai`,
+  `api.mistral.ai`) when you run an evaluation.
 - API keys are read on demand from the Settings inputs and only ever sent to the
   provider you picked. If you save them, they live in this extension's private
   `chrome.storage.local` — sites and other extensions cannot read that area —
