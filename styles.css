@@ -16,6 +16,7 @@
   --marker: rgba(47, 157, 98, 0.22);
   --marker-line: #2f9d62;
   --shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+  --status-h: 26px;             /* bottom reading-position strip; see .reader-toolbar */
   --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", "Helvetica Neue", Arial, sans-serif;
 }
 [data-theme="light"] {
@@ -74,6 +75,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   color: var(--text); font-size: 13px; line-height: 1.45;
   box-shadow: var(--shadow);
   animation: toast-in 0.18s ease;
+  transition: bottom 0.18s ease;
 }
 .toast.error { border-color: var(--error); color: var(--error); }
 .toast.success { border-color: var(--success); color: var(--success); }
@@ -157,11 +159,15 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--a
   display: flex; flex-direction: column; min-width: 0; min-height: 0;
   background: var(--bg);
 }
-/* the reading position readout — no controls live in here any more, so it is a
-   thin strip, and it only appears once a paragraph has been marked as read */
+/* bottom status strip — the reading position readout. No controls live in here
+   any more, so it is thin, and it only appears once a paragraph has been marked
+   as read. It is the last row of the reader column, which spans the viewport, so
+   it lands at the bottom of the screen; the floating React button and the toast
+   sit above it, clearing it by --status-h. */
 .reader-toolbar {
   flex: 0 0 auto; display: flex; align-items: center; gap: 10px;
-  padding: 3px 16px; border-bottom: 1px solid var(--border); background: var(--bg);
+  min-height: var(--status-h);
+  padding: 3px 16px; border-top: 1px solid var(--border); background: var(--bg);
 }
 #read-pos { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .speech-bar {
@@ -241,7 +247,9 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--a
 /* floating React button — the one way into the reactions sheet */
 .reactions-fab {
   display: inline-flex; align-items: center; gap: 7px;
+  /* sits on the bottom edge; body.has-status lifts it clear of the status strip */
   position: fixed; right: 16px; bottom: 16px; z-index: 45;
+  transition: bottom 0.18s ease;
   background: var(--accent); color: #fff; border: none;
   padding: 11px 16px; border-radius: 999px; cursor: pointer;
   font-size: 13.5px; font-weight: 600;
@@ -394,8 +402,12 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--a
 
 /* One layout everywhere: the reactions sheet and the reader behave identically
    at every width, so there is no desktop/mobile divergence left to style. */
-/* (The toast used to be lifted clear of the floating pill here. It now sits in
-   the opposite corner from the pill, so no offset is needed.) */
+
+/* The bottom status strip lifts the floating React button and the toast clear of
+   it. Until a paragraph is marked as read the strip is hidden, so both fall back
+   to their base rule and sit on the bottom edge — never a gap. */
+body.has-status .reactions-fab { bottom: calc(var(--status-h) + 16px); }
+body.has-status .toast { bottom: calc(var(--status-h) + 16px); }
 
 /* narrow: full-screen modals and tighter reading padding */
 @media (max-width: 1000px) {

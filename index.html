@@ -20,10 +20,6 @@
         <button id="btn-source" class="btn icon-btn" title="Paste text to study" aria-label="Add text"><span class="ic ic-plus" aria-hidden="true"></span></button>
         <button id="btn-settings" class="btn icon-btn" title="Settings" aria-label="Settings"><span class="ic ic-gear" aria-hidden="true"></span></button>
       </div>
-      <!-- position readout — stays hidden until a paragraph has been marked as read -->
-      <div id="reader-toolbar" class="reader-toolbar hidden">
-        <span id="read-pos" class="dim"></span>
-      </div>
       <div class="speech-bar">
         <span class="mini-label">Read aloud</span>
         <select id="voice-select" title="Voice"></select>
@@ -44,6 +40,11 @@
           No text loaded. Press <b>+</b> in the top bar to paste text,<br>
           or click the extension’s <b>toolbar icon while on a webpage</b> to load that page’s text.
         </div>
+      </div>
+      <!-- bottom status strip — the reading-position readout. Hidden until a
+           paragraph has been marked as read. -->
+      <div id="reader-toolbar" class="reader-toolbar hidden">
+        <span id="read-pos" class="dim"></span>
       </div>
       <!-- the single way into the reactions sheet: arms a reaction at the marker,
            opens the sheet and puts the caret in the composer. Never disabled —
