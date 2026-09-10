@@ -109,6 +109,13 @@ does the wiring.
    what you read (¶ 0 → marker) is sent as context. Nothing in the sheet is greyed
    out: if something is missing, it tells you why. **✕** (or `Esc`) returns
    to the reading pane.
+
+   Recording keeps going for as long as you do: the browser ends its own
+   recognition session whenever it thinks an utterance finished — a breath
+   mid-sentence is often enough — so a new session is opened underneath the same
+   recording and the transcript is stitched across the seam. Only the mic button,
+   closing the sheet, sending, or a blocked microphone stops it. A pause is not a
+   failure and never ends a recording.
 5. **Evaluate** — open **⚙ Settings** (top bar, icon only), pick a provider card
    (OpenAI, Claude, Gemini, DeepSeek, Kimi, Mistral), paste its key, choose a
    model, then press **Save** and hit **Send**. Scores + suggested summary appear
