@@ -136,7 +136,7 @@ function startUrlLoad() {
 
   const url = normalizeUrl(els.urlInput.value);
   if (!url) {
-    setStatus('Enter a web address, for example https://example.com/article', 'error');
+    setStatus('Enter a web address, for example https://example.com/article', 'warn');
     els.urlInput.focus();
     return;
   }
@@ -171,7 +171,7 @@ async function loadFromUrl(url, asking) {
 // ---------- the paste tab ----------
 function loadPastedText() {
   const text = els.pasteText.value.trim();
-  if (!text) { setStatus('Paste some text first', 'error'); return; }
+  if (!text) { setStatus('Paste some text first', 'warn'); return; }
   loadSource(text, 'Pasted text', '');
   els.pasteText.value = '';
   closeModal(els.sourceModal);
@@ -192,7 +192,7 @@ async function consumePendingGrab() {
         loadSource(pendingGrab.text, pendingGrab.title || '', pendingGrab.url || '');
         setStatus('Loaded text from the page you opened this from', 'success');
       } else {
-        setStatus('Nothing readable was found on that page — use the + button to paste instead.', 'error');
+        setStatus('Nothing readable was found on that page — use the + button to paste instead.', 'warn');
       }
     } else if (pendingGrab) {
       chrome.storage.session.remove('pendingGrab'); // stale token

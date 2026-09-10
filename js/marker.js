@@ -29,7 +29,7 @@ function renderReadingState() {
 function updateReadPos() {
   // The bar exists only to report where you are, so it stays out of the way until
   // a paragraph has actually been marked as read. While it is hidden, the floating
-  // React button and the toast drop down to the bottom edge — this body class is
+  // React button and the toast stack drop down to the bottom edge — this body class is
   // what tells the stylesheet which of the two positions to use.
   const marked = state.paras.length > 0 && state.markerP >= 0;
   els.readerToolbar.classList.toggle('hidden', !marked);

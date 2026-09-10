@@ -73,9 +73,9 @@ function wireReactions() {
   els.btnCloseReactions.addEventListener('click', closeReactions);
 
   els.btnReact.addEventListener('click', () => {
-    if (state.paras.length === 0) { setStatus('Load a source text first', 'error'); return; }
-    if (state.markerP < 0) { setStatus('Click a paragraph to set your spot first', 'error'); return; }
-    if (state.busyEval) { setStatus('Wait for the current evaluation to finish', 'error'); return; }
+    if (state.paras.length === 0) { setStatus('Load a source text first', 'warn'); return; }
+    if (state.markerP < 0) { setStatus('Click a paragraph to set your spot first', 'warn'); return; }
+    if (state.busyEval) { setStatus('Wait for the current evaluation to finish', 'warn'); return; }
     stopTTS();
     const rearming = !state.pending || state.pending.markerP !== state.markerP;
     state.pending = { markerP: state.markerP };
@@ -91,10 +91,10 @@ function wireReactions() {
   });
 
   els.btnSend.addEventListener('click', async () => {
-    if (!state.pending) { setStatus('Press React to write a reaction', 'error'); return; }
+    if (!state.pending) { setStatus('Press React to write a reaction', 'warn'); return; }
     const text = els.reactText.value.trim();
-    if (!text) { setStatus('Write or speak a reaction first', 'error'); return; }
-    if (state.busyEval) { setStatus('Wait for the current evaluation to finish', 'error'); return; }
+    if (!text) { setStatus('Write or speak a reaction first', 'warn'); return; }
+    if (state.busyEval) { setStatus('Wait for the current evaluation to finish', 'warn'); return; }
 
     const prov = activeProvider();
     if (!prov.key) {

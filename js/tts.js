@@ -47,7 +47,7 @@ function setPauseBtn(label) {
 function readAloudFrom(startP) {
   if (!synth || !state.paras.length) return;
   if (startP < 0 || startP >= state.paras.length) {
-    setStatus('Nothing left to read — mark an earlier paragraph to re-read', 'error');
+    setStatus('Nothing left to read — mark an earlier paragraph to re-read', 'warn');
     return;
   }
   stopTTS();
@@ -95,6 +95,9 @@ function speakNext() {
   synth.speak(utter);
 }
 
+// `finished` separates "read to the end" from "the user stopped": stopTTS() is
+// also called to silence the voice when a new source loads (js/reader.js) or when
+// a reaction starts, and those must not announce that reading was stopped.
 function stopTTS(finished) {
   if (synth) {
     try { synth.cancel(); } catch { /* noop */ }
@@ -122,7 +125,7 @@ function initTTS() {
   synth.addEventListener('voiceschanged', populateVoices);
 
   els.btnRead.addEventListener('click', () => {
-    if (!state.paras.length) { setStatus('Load text first', 'error'); return; }
+    if (!state.paras.length) { setStatus('Load text first', 'warn'); return; }
     // Read from the selected paragraph itself — not the one after it.
     if (state.markerP < 0) {
       setMarker(0);

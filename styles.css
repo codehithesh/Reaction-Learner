@@ -68,17 +68,41 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 }
 .brand { font-weight: 650; font-size: 14px; letter-spacing: 0.01em; white-space: nowrap; }
 
-/* ---------- toast (bottom-left, transient) ---------- */
-.toast {
+/* ---------- toast (bottom-left, stacked) ---------- */
+/* Toasts stack instead of replacing one another. A problem message (error or
+   warn) stays until dismissed for the first kind and clears itself for the
+   second — see setStatus in js/dom.js. The stack itself is click-through: only
+   the toasts in it take pointer events, so its empty area never blocks the UI
+   underneath. */
+.toast-stack {
   position: fixed; left: 16px; bottom: 16px; z-index: 200;
-  max-width: min(400px, calc(100vw - 32px));
-  padding: 10px 14px; border-radius: 10px;
+  width: min(400px, calc(100vw - 32px));
+  display: flex; flex-direction: column; gap: 8px;
+  max-height: min(50vh, 380px); overflow-y: auto;
+  pointer-events: none;
+  transition: bottom 0.18s ease;
+}
+.toast {
+  /* flex:none — as a flex item in a column stack these would otherwise shrink
+     and squash their text once the stack hits its max-height, instead of letting
+     the stack scroll */
+  flex: none;
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 10px 8px 10px 14px; border-radius: 10px;
   background: var(--panel-2); border: 1px solid var(--border);
   color: var(--text); font-size: 13px; line-height: 1.45;
   box-shadow: var(--shadow);
   animation: toast-in 0.18s ease;
-  transition: bottom 0.18s ease;
+  pointer-events: auto;
 }
+.toast-msg { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.toast-close {
+  flex: none; width: 22px; height: 22px; padding: 0; margin-top: -1px;
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: none; border-radius: 6px; cursor: pointer;
+  color: inherit; opacity: 0.55; font-size: 12px; line-height: 1;
+}
+.toast-close:hover { opacity: 1; background: var(--border); }
 .toast.error { border-color: var(--error); color: var(--error); }
 .toast.success { border-color: var(--success); color: var(--success); }
 @keyframes toast-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
@@ -419,7 +443,7 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--a
    it. Until a paragraph is marked as read the strip is hidden, so both fall back
    to their base rule and sit on the bottom edge — never a gap. */
 body.has-status .reactions-fab { bottom: calc(var(--status-h) + 16px); }
-body.has-status .toast { bottom: calc(var(--status-h) + 16px); }
+body.has-status .toast-stack { bottom: calc(var(--status-h) + 16px); }
 
 /* ---------- the reading measure ----------
    Full-bleed containers give a paragraph a ~2500px line on a wide monitor, and

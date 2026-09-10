@@ -77,7 +77,7 @@ function scheduleRestart() {
       // the microphone yet. Retry briefly, then stop rather than spin.
       if (++restartFails > MAX_RESTARTS) {
         endListening();
-        setStatus('Could not keep the microphone open — press the mic to try again', 'error');
+        setStatus('Could not keep the microphone open — press the mic to try again', 'warn');
         return;
       }
       scheduleRestart();
@@ -126,9 +126,13 @@ function toggleListening() {
     recognition.start();
   } catch (err) {
     endListening();
-    setStatus(err && err.name === 'NotAllowedError'
+    // a blocked mic is a setting the user has to go and change; "busy" is just
+    // this instant and stops being true the moment they press the mic again
+    const blocked = err && err.name === 'NotAllowedError';
+    setStatus(blocked
       ? 'Microphone is blocked — allow mic access for this page'
-      : 'Mic is already busy — try again', 'error');
+      : 'Mic is already busy — try again',
+      blocked ? 'error' : 'warn');
   }
 }
 
@@ -195,7 +199,7 @@ function initSTT() {
       setStatus('The microphone keeps failing (' + code + ') — press the mic to retry', 'error');
       return;
     }
-    setStatus('Mic error: ' + code + ' — retrying', 'error');
+    setStatus('Mic error: ' + code + ' — retrying', 'warn');
   };
 
   els.btnMic.addEventListener('click', toggleListening);

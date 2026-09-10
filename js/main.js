@@ -23,6 +23,7 @@ async function init() {
 
   // 2 · wiring (synchronous, so the UI is live immediately)
   wireModals();
+  wireToasts();
   wireGlobals();
   initTheme();
   initTTS();
