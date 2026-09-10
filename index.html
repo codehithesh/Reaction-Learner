@@ -50,36 +50,11 @@
       <button id="btn-reactions" class="reactions-fab" title="Open the reactions panel"><span class="ic ic-msg" aria-hidden="true"></span>Reactions</button>
     </section>
 
-    <!-- reactions: a full-screen sheet — identical on desktop & mobile. It covers
-         the text so you recall from memory, and “React here” opens it. -->
-    <section class="reactions-col" id="reactions-col">
-      <div class="reactions-head">
-        <span class="head-title">Reactions</span>
-        <span class="recall-badge" title="The source text is covered while you write"><span class="ic ic-eye-off" aria-hidden="true"></span>Recall from memory</span>
-        <div class="spacer"></div>
-        <div class="head-actions">
-          <div class="menu-wrap">
-            <button id="btn-export" class="btn icon-btn" title="Export this session" aria-label="Export this session" aria-haspopup="true" aria-expanded="false" disabled><span class="ic ic-download" aria-hidden="true"></span></button>
-            <div id="export-menu" class="menu hidden" role="menu">
-              <button class="menu-item" data-format="json" role="menuitem">JSON</button>
-              <button class="menu-item" data-format="markdown" role="menuitem">Markdown</button>
-            </div>
-          </div>
-          <button id="btn-close-reactions" class="btn compact" title="Back to the text"><span class="ic ic-eye" aria-hidden="true"></span>Show text</button>
-        </div>
-      </div>
-      <div id="reactions" class="reactions">
-        <div class="empty-state">Click a paragraph to set your spot, press <b>React here</b>, and your reactions + AI evaluations will appear here.</div>
-      </div>
-      <div class="composer">
-        <div id="react-hint" class="dim">Click a paragraph, then press <b>React here</b>.</div>
-        <div class="composer-row">
-          <textarea id="react-text" rows="1" placeholder="Type your reaction here or click the mic and just say it…" disabled></textarea>
-          <button id="btn-mic" class="btn icon-btn" disabled title="Native speech-to-text" aria-label="Record your reaction"><span class="ic ic-mic" aria-hidden="true"></span><span class="rec-label">Recording</span></button>
-          <button id="btn-send" class="btn primary icon-btn" title="Send" aria-label="Send reaction" disabled><span class="ic ic-send" aria-hidden="true"></span></button>
-        </div>
-      </div>
-    </section>
+    <!-- The reactions sheet is mounted here. Its markup lives in
+         js/reactions-view.js — a page opened over file:// may not read other
+         local files, so each pane carries its own markup in its own script and
+         mounts it before any behaviour is wired. -->
+    <div data-view="reactions"></div>
   </div>
 
   <!-- ===================== TOAST (bottom-right, transient) ===================== -->
@@ -105,41 +80,47 @@
   </div>
 </div>
 
-<!-- ===================== SETTINGS MODAL ===================== -->
-<div id="settings-modal" class="modal-overlay hidden">
-  <div class="modal">
-    <div class="modal-head">
-      <h3>Settings</h3>
-      <div class="head-actions">
-        <button id="btn-save-settings" class="btn primary" title="Save keys and preferences">Save</button>
-        <button id="btn-close-settings" class="btn icon-btn" title="Close without saving" aria-label="Close">✕</button>
-      </div>
-    </div>
-    <div class="modal-body">
-      <div class="appearance-row">
-        <h4 class="modal-label appearance-label">Appearance</h4>
-        <div class="seg">
-          <button id="theme-system" class="seg-btn active"><span class="ic ic-monitor" aria-hidden="true"></span>System</button>
-          <button id="theme-light" class="seg-btn"><span class="ic ic-sun" aria-hidden="true"></span>Light</button>
-          <button id="theme-dark" class="seg-btn"><span class="ic ic-moon" aria-hidden="true"></span>Dark</button>
-        </div>
-      </div>
+<!-- The settings modal is mounted here — markup in js/settings-view.js. -->
+<div data-view="settings"></div>
 
-      <h4 class="modal-label">AI evaluation provider</h4>
-      <p class="hint">Pick a provider and type its API key, then choose its model. Nothing is stored until you press <b>Save</b> — saving keeps the keys, the provider, the models and your light/dark choice in this extension’s private browser storage (nothing else can read them). Keys are sent only to their provider when you evaluate. “Forget saved keys” erases them from the browser completely.</p>
+<!-- ============================================================
+     Plain scripts, loaded in dependency order — deliberately NOT ES modules:
+     module scripts and fetch() of local files are both blocked on file://, and
+     index.html must keep working when opened straight from disk.
+     ============================================================ -->
 
-      <div id="provider-list"></div>
+<!-- 1 · pane markup, mounted into the two slots above -->
+<script src="js/view.js"></script>
+<script src="js/settings-view.js"></script>
+<script src="js/reactions-view.js"></script>
 
-      <div class="forget-row">
-        <button id="btn-forget-keys" class="btn compact" disabled><span class="ic ic-trash" aria-hidden="true"></span>Forget saved keys</button>
-        <span class="hint">Erases any saved keys from this browser.</span>
-      </div>
+<!-- 2 · foundation: state, helpers, element cache -->
+<script src="js/state.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/dom.js"></script>
+<script src="js/theme.js"></script>
 
-      <div id="api-error"></div>
-    </div>
-  </div>
-</div>
+<!-- 3 · provider config + the API call functions -->
+<script src="js/providers.js"></script>
+<script src="js/api.js"></script>
 
-<script src="app.js"></script>
+<!-- 4 · native speech: text-to-speech + speech-to-text -->
+<script src="js/tts.js"></script>
+<script src="js/stt.js"></script>
+
+<!-- 5 · saved settings -->
+<script src="js/store.js"></script>
+<script src="js/settings.js"></script>
+
+<!-- 6 · reading, composer, reactions, evaluation, export -->
+<script src="js/marker.js"></script>
+<script src="js/composer.js"></script>
+<script src="js/reader.js"></script>
+<script src="js/evaluation.js"></script>
+<script src="js/export.js"></script>
+<script src="js/reactions.js"></script>
+
+<!-- 7 · boot -->
+<script src="js/main.js"></script>
 </body>
 </html>

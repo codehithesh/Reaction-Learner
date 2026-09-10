@@ -27,13 +27,56 @@ JSON/Markdown export happens in-browser.
 ## Files
 
 ```
-manifest.json   MV3 manifest (activeTab, scripting, storage)
-background.js   toolbar click → grabs current tab text → hands it to the app tab
-index.html      app page UI
-styles.css      styling
-app.js          all logic (state, marker, native STT/TTS, eval, export)
-icons/          UI glyphs (16/48/128 app icons + masked SVG icons)
+manifest.json       MV3 manifest (activeTab, scripting, storage)
+background.js       toolbar click → grabs current tab text → hands it to the app tab
+index.html          page shell: reader pane, source modal, and the two pane mount points
+styles.css          styling
+icons/              UI glyphs (16/48/128 app icons + masked SVG icons)
+
+js/view.js          mounts a pane's markup into its placeholder
+js/settings-view.js   Settings pane markup  (own file)
+js/reactions-view.js  Reactions pane markup (own file)
+
+js/state.js         all session state + runtime constants
+js/utils.js         pure helpers (formatting, slug, escaping)
+js/dom.js           element cache, modals, toast
+js/theme.js         System / Light / Dark appearance
+js/providers.js     the six BYOK providers + their key/model inputs
+js/api.js           the API call functions — the only network layer
+js/tts.js           text-to-speech (native, no API)
+js/stt.js           speech-to-text (native, no API)
+js/store.js         reading/writing saved preferences
+js/settings.js      Settings behaviour: draft, Save, Forget keys
+js/marker.js        the position marker and paragraph highlighting
+js/composer.js      the auto-growing composer + which controls are enabled
+js/reader.js        source text: paste, segment, render, grabbed page text
+js/evaluation.js    the scoring rubric, prompt and result rendering
+js/export.js        JSON / Markdown export
+js/reactions.js     the reactions sheet and the send-and-evaluate flow
+js/main.js          boot: wires the modules together and starts the app
 ```
+
+### How the split works
+
+The two panes that used to be inline in `index.html` now keep their markup in
+their own file (`js/settings-view.js`, `js/reactions-view.js`) and mount it into a
+placeholder on load. Everything else is split by responsibility, so each file
+owns one job — the API calls, text-to-speech and speech-to-text each live in
+their own file.
+
+Scripts are plain `<script src>` tags in dependency order, **not ES modules, and
+nothing is fetched**. That is deliberate: `index.html` must keep working when
+opened straight from disk, and a `file://` page is not allowed to load module
+scripts or read other local files. A plain script has no such restriction, which
+is why each pane's markup travels inside a script rather than in a fetched
+`.html` partial. Load order is the only ordering rule — `js/main.js` runs last and
+does the wiring.
+
+> One thing to expect when opening `index.html` from disk: the masked UI icons
+> (`icons/*.svg`, applied via `mask-image` in `styles.css`) cannot be loaded
+> cross-origin from a `file://` page, so the buttons show without their glyphs.
+> That is a pre-existing `file://` limitation, unrelated to this layout — load the
+> folder as the unpacked extension (or serve it over `http://`) to see them.
 
 > `chrome.storage.session` is used only as a transient, in-memory handoff buffer
 > for tab text passed from the toolbar click to the app page. It is deleted the
