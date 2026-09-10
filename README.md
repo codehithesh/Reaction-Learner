@@ -142,6 +142,9 @@ provider, model and appearance preferences alone.
 
 ## Privacy
 
+The full policy is in [PRIVACY.md](PRIVACY.md), which is the document linked from
+the Chrome Web Store listing. In short:
+
 - Source text, reactions, and evaluations exist **only in page memory**.
 - **Read aloud is fully local.** `speechSynthesis` speaks through the voices
   already installed in your operating system. No text and no audio leaves the

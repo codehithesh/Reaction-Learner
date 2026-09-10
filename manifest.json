@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Reaction Learner",
   "version": "1.0.0",
-  "description": "Read any text, mark where you are, react aloud or in writing, and get an AI evaluation of your understanding. No accounts, no servers — speech is native, everything stays in memory.",
+  "description": "Read any text, mark your spot, react by voice or in writing, and get an AI evaluation of how well you understood it.",
   "permissions": ["activeTab", "scripting", "storage"],
   "host_permissions": [
     "https://api.openai.com/*",
