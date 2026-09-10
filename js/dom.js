@@ -26,7 +26,11 @@ function cacheEls() {
     btnCloseReactions: $('btn-close-reactions'),
     // modals
     sourceModal: $('source-modal'), settingsModal: $('settings-modal'),
-    pasteText: $('paste-text'), loadPaste: $('load-paste'),
+    // source modal: the two tabs and the single Load text button they share
+    sourceTabs: $('source-tabs'), tabPaste: $('tab-paste'), tabUrl: $('tab-url'),
+    panePaste: $('pane-paste'), paneUrl: $('pane-url'),
+    pasteText: $('paste-text'), urlInput: $('url-input'), urlHint: $('url-hint'),
+    loadSource: $('load-source'),
     themeSystem: $('theme-system'), themeLight: $('theme-light'), themeDark: $('theme-dark'),
     providerList: $('provider-list'),
     apiError: $('api-error'),

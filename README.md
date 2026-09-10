@@ -27,7 +27,7 @@ the one thing that leaves your machine — see [Privacy](#privacy).
 
 | Area | How it works |
 | --- | --- |
-| Source | Paste any text with the **+** button in the top bar, **or** click the toolbar icon while on a webpage to load that page's readable text |
+| Source | The **+** button in the top bar opens a two-tab modal: **Add custom text** pastes any text, **Enter URL** loads an article's readable text from its address. **Or** click the toolbar icon while on a webpage to load that page's text |
 | Position marker (T) | Click the paragraph you've read up to; the text before it becomes the evaluation context |
 | Reaction sheet | The floating **React** button opens the reactions sheet **full screen** — identical on desktop and mobile — so the source text is covered and you write from memory, with the caret already in the composer. **✕** (or `Esc`) lifts it |
 | Reaction | Type it in the auto-growing composer, or speak it — the browser's own `SpeechRecognition`, so no speech API and no extra key to get. Be aware that Chrome transcribes that audio on Google's servers: [Privacy](#privacy) |
@@ -40,9 +40,9 @@ the one thing that leaves your machine — see [Privacy](#privacy).
 ## Files
 
 ```
-manifest.json       MV3 manifest (activeTab, scripting, storage)
-background.js       toolbar click → grabs current tab text → hands it to the app tab
-index.html          page shell: reader pane, source modal, and the two pane mount points
+manifest.json       MV3 manifest (activeTab, scripting, storage, optional per-site access)
+background.js       shared page-text extraction: toolbar click (active tab) and Enter URL (hidden tab)
+index.html          page shell: reader pane, source modal (paste + URL tabs), and the two pane mount points
 styles.css          styling
 icons/              UI glyphs (16/48/128 app icons + masked SVG icons)
 
@@ -62,7 +62,7 @@ js/store.js         reading/writing saved preferences
 js/settings.js      Settings behaviour: draft, Save, Forget keys
 js/marker.js        the position marker and paragraph highlighting
 js/composer.js      the auto-growing composer + which controls are enabled
-js/reader.js        source text: paste, segment, render, grabbed page text
+js/reader.js        source text: paste, load from URL, segment, render, grabbed page text
 js/evaluation.js    the scoring rubric, prompt and result rendering
 js/export.js        JSON / Markdown export
 js/reactions.js     the reactions sheet and the send-and-evaluate flow
@@ -106,8 +106,9 @@ does the wiring.
 
 ## How to use
 
-1. **Load text** — press the **+** button in the top bar and paste it, or click the extension's
-   toolbar icon on a webpage to load its readable text automatically.
+1. **Load text** — press the **+** button in the top bar and paste it, enter a URL in the
+   **Enter URL** tab to load that article, or click the extension's toolbar icon on a webpage
+   to load its readable text automatically.
 2. **Read** — optionally hit **▶ Read** in the reader bar for native read-aloud
    (pick an OS voice). The marker advances as it reads.
 3. **Mark** — click the paragraph you've read up to in the script pane
@@ -135,6 +136,28 @@ does the wiring.
 6. **Export** — the **Export** dropdown in the sheet header writes JSON/Markdown
    anytime while the session is open.
 
+### Loading from a URL
+
+The **Enter URL** tab opens the address in a **background tab**, takes the page's readable
+text with the same extraction the toolbar click uses, then closes that tab. Because it is a
+real page load rather than a download of the HTML, script-rendered articles and pages you
+are signed in to work, and paragraph breaks survive. PDFs, `chrome://` pages and sites that
+block extensions cannot be read this way.
+
+The first time you load any given site, Chrome asks you to allow access **to that site
+only** — `http://*/*` and `https://*/*` are declared as *optional* host permissions, so
+nothing is granted at install and no origin beyond the one you approve is ever readable.
+Revoke any site individually in `chrome://extensions`; the toolbar-click path is unaffected
+either way.
+
+One trap for anyone editing this: the optional declaration must name the schemes
+explicitly. Declaring `<all_urls>` instead and requesting a single origin fails with
+*"Only permissions specified in the manifest may be requested"*, because Chrome does not
+treat that token as containing a specific origin.
+
+The alternative, a plain `fetch()`, was rejected because it returns the HTML before any
+script has run: an empty shell on most modern sites, and it cannot produce the line breaks
+the reader splits paragraphs on.
 ## Saved settings
 
 Nothing is written to storage while you type. The Settings modal edits a draft,

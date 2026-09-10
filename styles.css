@@ -134,14 +134,18 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 }
 .seg-btn.active { background: var(--accent); color: #fff; font-weight: 500; }
 .seg-btn:not(.active):hover { background: var(--border); color: var(--text); }
+/* a tab whose backing feature is unavailable in this context (e.g. Enter URL
+   when the page is opened from disk, where cross-origin fetch is impossible) */
+.seg-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.seg-btn:disabled:hover { background: var(--panel); color: var(--text-dim); }
 
 label { font-size: 11px; font-weight: 600; color: var(--text-dim); margin-top: 10px; display: block; }
-input[type="password"], select, textarea {
+input[type="password"], input[type="url"], select, textarea {
   width: 100%; background: var(--panel);
   border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 13px;
 }
 /* uniform 34px fields; the big source box & reaction box keep natural height */
-input[type="password"], select { height: 34px; padding: 0 10px; }
+input[type="password"], input[type="url"], select { height: 34px; padding: 0 10px; }
 textarea { padding: 8px 10px; line-height: 1.5; resize: vertical; }
 input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); }
 .hint { font-size: 11.5px; color: var(--text-dim); }
@@ -370,6 +374,11 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--a
 }
 .appearance-row .seg-btn { font-size: 12px; padding: 0 4px; white-space: nowrap; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+
+/* source modal: the two tab panels. A pane repeats the modal body's own column
+   gap so switching tabs never shifts the surrounding spacing. */
+.source-pane { display: flex; flex-direction: column; gap: 10px; }
+#source-tabs { margin-bottom: 2px; }
 
 /* provider cards — stacked, one after another */
 #provider-list { display: flex; flex-direction: column; gap: 16px; }

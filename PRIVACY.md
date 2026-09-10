@@ -38,12 +38,19 @@ Uninstalling the extension also removes this storage.
 
 ### Source text and reactions
 
-Source text is loaded in one of two ways, both under your control:
+Source text is loaded in one of three ways, all under your control:
 
 - you paste it yourself, or
+- you type an address into the **Enter URL** tab, which opens that page in a
+  background tab, reads its readable text, and closes the tab again. This needs
+  your approval for that one site — Chrome asks the first time you load it, and
+  you can revoke it at any time — or
 - you click the extension's toolbar icon on a page, which reads that page's
   readable text using Chrome's `activeTab` permission. This happens only at the
   moment you click; the extension has no standing access to your browsing.
+
+In every case the text is taken from the page in your own browser and is never
+sent to us — we operate no server that could receive it.
 
 Source text, the paragraph you marked, your written reactions and the AI's
 evaluations are held **in memory only**, in the running page. They are not stored
@@ -110,12 +117,26 @@ the extension. Exported files are yours to delete.
 | Permission | Why |
 | --- | --- |
 | `activeTab` | Read the current page's text, only after you click the toolbar icon |
-| `scripting` | Extract that page's readable text at the moment you click |
+| `scripting` | Extract that page's readable text at the moment you click, and read a page you loaded through **Enter URL** |
 | `storage` | Save your API keys, chosen provider, model and appearance, locally |
 | Host access to the six AI provider endpoints | Send your evaluation request to the provider you selected |
+| **Optional** host access to sites | Only if you use **Enter URL**, and only for the sites you approve in Chrome's prompt |
 
-The extension requests no access to all websites, and executes no remote code —
-every line of it ships inside the package.
+The one permission that could grant access to websites is declared **optional**.
+It is not granted when you install or update the extension. It is requested only
+when you press **Load text** in the **Enter URL** tab, one origin at a time, and
+each grant can be revoked individually in `chrome://extensions` without
+uninstalling. If you never use **Enter URL**, the extension never holds access to
+any site beyond the one you clicked on with the toolbar icon.
+
+When you do approve a site, what happens is narrow and inspectable:
+`background.js` opens the exact address you typed, runs one function that reads
+`article`/`main`/`body` text, and closes the tab again. Nothing is fetched unless
+you press **Load text**, and there is no background scanning and no history
+access.
+
+The extension executes no remote code — every line of it ships inside the
+package.
 
 ## Children
 
