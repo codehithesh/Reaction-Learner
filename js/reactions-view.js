@@ -22,7 +22,7 @@ const REACTIONS_VIEW_HTML = `
               <button class="menu-item" data-format="markdown" role="menuitem">Markdown</button>
             </div>
           </div>
-          <button id="btn-close-reactions" class="btn compact" title="Back to the text"><span class="ic ic-eye" aria-hidden="true"></span>Show text</button>
+          <button id="btn-close-reactions" class="btn icon-btn" title="Close" aria-label="Close">✕</button>
         </div>
       </div>
       <div id="reactions" class="reactions">

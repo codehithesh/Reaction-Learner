@@ -16,7 +16,7 @@ JSON/Markdown export happens in-browser.
 | --- | --- |
 | Source | Paste any text, **or** click the toolbar icon while on a webpage to load that page's readable text |
 | Position marker (T) | Click the paragraph you've read up to; the text before it becomes the evaluation context |
-| Reaction sheet | The floating **React** button opens the reactions sheet **full screen** — identical on desktop and mobile — so the source text is covered and you write from memory, with the caret already in the composer. **Show text** (or `Esc`) lifts it |
+| Reaction sheet | The floating **React** button opens the reactions sheet **full screen** — identical on desktop and mobile — so the source text is covered and you write from memory, with the caret already in the composer. **✕** (or `Esc`) lifts it |
 | Reaction | Type it in the auto-growing composer, or speak it — **native** `webkitSpeechRecognition`, no speech API, nothing uploaded |
 | Read aloud | **Native** `speechSynthesis` with OS voices, highlight + auto-advancing marker, pause/stop to react |
 | Evaluation | BYOK across **OpenAI** (`o3-mini` / `o4-mini` / `gpt-4o`), **Claude** (`claude-sonnet-5` / `claude-opus-5` / `claude-haiku-4-5` / `claude-fable-5-1`), **Google Gemini** (`gemini-3.8-flash` / `gemini-3.1-pro` / …), **DeepSeek** (`deepseek-reasoner` / `deepseek-chat`), **Kimi** (`kimi-k3` / `kimi-k2.6`) and **Mistral**; unsupported models/params fall back automatically |
@@ -104,7 +104,7 @@ does the wiring.
    straight into the composer. Type in the one-line box (it grows as you write) or
    press the **mic icon** and speak — while recording it shows **Recording**. Only
    what you read (¶ 0 → marker) is sent as context. Nothing in the sheet is greyed
-   out: if something is missing, it tells you why. **Show text** (or `Esc`) returns
+   out: if something is missing, it tells you why. **✕** (or `Esc`) returns
    to the reading pane.
 5. **Evaluate** — open **⚙ Settings** (top bar, icon only), pick a provider card
    (OpenAI, Claude, Gemini, DeepSeek, Kimi, Mistral), paste its key, choose a

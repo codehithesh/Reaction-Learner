@@ -28,7 +28,7 @@ function updateControls() {
   els.btnExport.disabled = state.reactions.length === 0;
   if (els.btnExport.disabled) closeExportMenu();
   if (state.pending) {
-    els.reactHint.textContent = `Reacting at ¶ ${state.pending.markerP + 1} — the text is covered, so recall it from memory. “Show text” brings it back.`;
+    els.reactHint.textContent = `Reacting at ¶ ${state.pending.markerP + 1} — the text is covered, so recall it from memory. ✕ brings it back.`;
   } else if (state.busyEval) {
     els.reactHint.textContent = 'Evaluating your reaction…';
   } else {
