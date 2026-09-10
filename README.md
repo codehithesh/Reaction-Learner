@@ -1,7 +1,16 @@
-# Reaction Learner — Chrome Extension
+<p align="center">
+    <picture>
+      <img src="https://github.com/codehithesh/Reaction-Learner/blob/main/icons/icon128.png" alt="Reaction Learner logo" />
+    </picture>
+</p>
 
-Read any text, mark where you are, then react — in writing or by just speaking —
-and get an AI evaluation of your understanding versus the source text.
+<h1 align="center">Reaction Learner</h1>
+
+<h3 align="center">
+  Read any text, mark where you are, then react — in writing or by just speaking — and get an AI evaluation of your understanding versus the source text.
+</h3>
+
+<br/>
 
 ![The reading pane with a source text loaded and a paragraph marked](https://github.com/codehithesh/Reaction-Learner/blob/main/assets/s1.png)
 ![The reactions sheet showing a written reaction and its AI evaluation](https://github.com/codehithesh/Reaction-Learner/blob/main/assets/s2.png)
