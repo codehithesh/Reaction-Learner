@@ -17,6 +17,8 @@
   --marker-line: #2f9d62;
   --shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
   --status-h: 26px;             /* bottom reading-position strip; see .reader-toolbar */
+  --read-max: 680px;            /* reading measure — ≈85 chars at 15.5px */
+  --chat-max: 880px;            /* reactions measure — fits the eval grid in 3 columns */
   --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", "Helvetica Neue", Arial, sans-serif;
 }
 [data-theme="light"] {
@@ -401,7 +403,8 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--a
 ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
 
 /* One layout everywhere: the reactions sheet and the reader behave identically
-   at every width, so there is no desktop/mobile divergence left to style. */
+   at every width and there is no desktop/mobile divergence left to style. Width
+   changes one thing only — the measure the text is set to; see below. */
 
 /* The bottom status strip lifts the floating React button and the toast clear of
    it. Until a paragraph is marked as read the strip is hidden, so both fall back
@@ -409,7 +412,28 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--a
 body.has-status .reactions-fab { bottom: calc(var(--status-h) + 16px); }
 body.has-status .toast { bottom: calc(var(--status-h) + 16px); }
 
-/* narrow: full-screen modals and tighter reading padding */
+/* ---------- the reading measure ----------
+   Full-bleed containers give a paragraph a ~2500px line on a wide monitor, and
+   past roughly 90 characters the eye loses its place on the return sweep to the
+   next line. So the text is capped at a measure and centred — while the
+   containers stay viewport-wide, which keeps scrollbars pinned to the window
+   edge, keeps the bars spanning the screen behind the text, and avoids wrapping
+   the paragraphs and bubbles in elements that js/reader.js and js/reactions.js
+   would then have to append into.
+
+   Symmetric padding is what does the work. Past the measure it resolves to
+   (100% - measure) / 2: an even gutter that grows with the leftover space.
+   Below it the calc() goes negative and max() falls back to the element's
+   original padding — so phones keep today's edge-to-edge look and there is no
+   breakpoint to keep in sync. The bars share --read-max with the text, so their
+   contents line up with the column the moment it stops filling the width. */
+.reading { padding-inline: max(26px, calc((100% - var(--read-max)) / 2)); }
+.speech-bar,
+.reader-toolbar { padding-inline: max(16px, calc((100% - var(--read-max)) / 2)); }
+.reactions { padding-inline: max(18px, calc((100% - var(--chat-max)) / 2)); }
+.composer { padding-inline: max(14px, calc((100% - var(--chat-max)) / 2)); }
+
+/* narrow: the settings and source modals go full screen */
 @media (max-width: 1000px) {
   .modal-overlay { padding: 0; align-items: stretch; }
   .modal {
