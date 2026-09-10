@@ -113,7 +113,10 @@ function activeProvider() {
   return {
     name: cfg.id,
     label: cfg.label,
-    key: providerInput(cfg.id).value.trim(),
+    // sanitized on the way out: this object is the only thing that becomes an
+    // Authorization header, so cleaning here covers every path into the field —
+    // a paste, a key restored from storage, or a hand-edited entry
+    key: sanitizeKey(providerInput(cfg.id).value).key,
     model: providerModel(cfg.id).value,
   };
 }

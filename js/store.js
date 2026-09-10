@@ -32,7 +32,10 @@ function shapePrefs(raw) {
   if (raw.keys && typeof raw.keys === 'object') {
     for (const prov of PROVIDERS) {
       const v = raw.keys[prov.id];
-      if (typeof v === 'string' && v.trim()) p.keys[prov.id] = v.trim();
+      if (typeof v !== 'string') continue;
+      // a key saved by an older build may still hold unmailable characters
+      const { key } = sanitizeKey(v);
+      if (key) p.keys[prov.id] = key;
     }
   }
   if (PROVIDER_MAP[raw.provider]) p.provider = raw.provider;

@@ -14,6 +14,17 @@ async function callChat(prov, model, messages) {
   const cfg = PROVIDER_MAP[prov.name];
   const headers = { 'content-type': 'application/json' };
 
+  // sanitizeKey() upstream means the key is always sendable by the time it gets
+  // here. If that ever stops being true, say why: a header value holding a code
+  // point above Latin-1 makes fetch() throw before the request leaves the
+  // browser, and the error it raises is about headers, not about the key.
+  if (/[^\u0020-\u00FF]/.test(prov.key)) {
+    throw new Error(
+      `The ${cfg.label} API key contains a character that cannot be sent in a request. ` +
+      'Re-paste the key in Settings.'
+    );
+  }
+
   // ---- Anthropic Messages API (different wire format) ----
   if (cfg.style === 'messages') {
     const system = messages.filter((m) => m.role === 'system').map((m) => m.content).join('\n\n');

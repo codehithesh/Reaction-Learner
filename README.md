@@ -38,7 +38,7 @@ js/settings-view.js   Settings pane markup  (own file)
 js/reactions-view.js  Reactions pane markup (own file)
 
 js/state.js         all session state + runtime constants
-js/utils.js         pure helpers (formatting, slug, escaping)
+js/utils.js         pure helpers (formatting, slug, escaping, key sanitizing)
 js/dom.js           element cache, modals, toast
 js/theme.js         System / Light / Dark appearance
 js/providers.js     the six BYOK providers + their key/model inputs
@@ -141,6 +141,16 @@ provider, model and appearance preferences alone.
   Once saved they live in this extension's private `chrome.storage.local` —
   sites and other extensions cannot read that area — and **Forget saved keys**
   deletes them from the browser entirely.
+- A pasted key is cleaned of characters a key can never contain — curly quotes,
+  em dashes, non-breaking spaces, zero-width joiners — because `fetch()` refuses
+  any header value carrying a code point above `U+00FF`, and the error it raises
+  ("String contains non ISO-8859-1 code point") blames the headers rather than
+  the key. Cleaning happens as you paste, as you save, and again on the way out,
+  so a key already sitting in storage from an older build repairs itself. Nothing
+  legitimate is removed: only whitespace, control characters and code points
+  above Latin-1 go, and Save reports how many characters it dropped. If your
+  provider then answers `401`, the key itself is genuinely wrong rather than
+  unmailable.
 
 ## License
 

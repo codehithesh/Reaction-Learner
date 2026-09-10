@@ -74,10 +74,14 @@ function applyDraftToInputs() {
 }
 
 async function saveSettings() {
+  let dropped = 0;
   if (draft) {
     for (const p of PROVIDERS) {
-      const v = providerInput(p.id).value.trim();
-      if (v) draft.keys[p.id] = v; else delete draft.keys[p.id];
+      const field = providerInput(p.id);
+      const { key, removed } = sanitizeKey(field.value);
+      dropped += removed;
+      if (removed) field.value = key;  // show back exactly what will be stored
+      if (key) draft.keys[p.id] = key; else delete draft.keys[p.id];
       draft.models[p.id] = providerModel(p.id).value;
     }
     draft.provider = state.provider;
@@ -87,8 +91,13 @@ async function saveSettings() {
   await writePrefs(prefs);
   syncThemePref();
   updateForgetBtn();
-  if (isExt) setStatus('Saved — keys, provider, models and appearance kept in this browser', 'success');
-  else setStatus('Saved for this session — a plain browser tab cannot store keys privately', 'success');
+  // say so when a key had to be repaired — the alternative is a user staring at
+  // an unchanged-looking field wondering why the provider rejected it
+  const note = dropped
+    ? ` — dropped ${dropped} character${dropped === 1 ? '' : 's'} that cannot be in a key`
+    : '';
+  if (isExt) setStatus('Saved — keys, provider, models and appearance kept in this browser' + note, 'success');
+  else setStatus('Saved for this session — a plain browser tab cannot store keys privately' + note, 'success');
   closeModal(els.settingsModal);
 }
 
@@ -125,12 +134,19 @@ function wireSettings() {
     const card = e.target.closest('.provider-card');
     if (card && draft && e.target.matches('input, select')) selectProvider(card.dataset.provider);
   });
-  // typing a key never writes to storage — Save does that
+  // Typing a key never writes to storage — Save does that. Junk characters that
+  // arrived with a paste are stripped as they land, with the caret put back
+  // where it was, so the field only ever shows a key that can actually be sent.
   els.settingsModal.addEventListener('input', (e) => {
-    if (e.target.matches('input[type="password"]')) {
-      setApiError('');
-      updateForgetBtn();
+    if (!e.target.matches('input[type="password"]')) return;
+    const { key, removed } = sanitizeKey(e.target.value);
+    if (removed) {
+      const caret = sanitizeKey(e.target.value.slice(0, e.target.selectionStart)).key.length;
+      e.target.value = key;
+      e.target.setSelectionRange(caret, caret);
     }
+    setApiError('');
+    updateForgetBtn();
   });
   // remembering a model choice is part of the draft too
   els.settingsModal.addEventListener('change', (e) => {
