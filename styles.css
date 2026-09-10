@@ -65,9 +65,9 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 }
 .brand { font-weight: 650; font-size: 14px; letter-spacing: 0.01em; white-space: nowrap; }
 
-/* ---------- toast (bottom-right, transient) ---------- */
+/* ---------- toast (bottom-left, transient) ---------- */
 .toast {
-  position: fixed; right: 16px; bottom: 16px; z-index: 200;
+  position: fixed; left: 16px; bottom: 16px; z-index: 200;
   max-width: min(400px, calc(100vw - 32px));
   padding: 10px 14px; border-radius: 10px;
   background: var(--panel-2); border: 1px solid var(--border);
@@ -196,7 +196,7 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--a
 .reading > .empty-state, .reactions > .empty-state { margin: auto 0; }
 
 /* reactions sheet: a full-screen overlay over the reader — the same on desktop
-   and mobile. Hidden until “React here” (or the pill) brings it up, so the text
+   and mobile. Hidden until the floating React button brings it up, so the text
    is out of sight while you recall. */
 .reactions-col {
   position: fixed; inset: 0; z-index: 60;
@@ -238,7 +238,7 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--a
 .composer { padding: 10px 18px 14px; }
 #react-hint { font-size: 12px; }
 
-/* floating “Reactions” pill — opens the sheet when it is hidden */
+/* floating React button — the one way into the reactions sheet */
 .reactions-fab {
   display: inline-flex; align-items: center; gap: 7px;
   position: fixed; right: 16px; bottom: 16px; z-index: 45;
@@ -394,8 +394,8 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--a
 
 /* One layout everywhere: the reactions sheet and the reader behave identically
    at every width, so there is no desktop/mobile divergence left to style. */
-/* keep toasts clear of the floating pill */
-body.reactions-closed .toast { bottom: 84px; }
+/* (The toast used to be lifted clear of the floating pill here. It now sits in
+   the opposite corner from the pill, so no offset is needed.) */
 
 /* narrow: full-screen modals and tighter reading padding */
 @media (max-width: 1000px) {
