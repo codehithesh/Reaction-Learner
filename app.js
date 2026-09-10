@@ -23,8 +23,7 @@ const state = {
   reactions: [],      // { id, text, mode, atParagraph, sliceText, truncated, sliceNote, sliceChars, ts }
   evals: [],          // { reactionId, provider, model, ok, error, result, raw }
   provider: 'openai',
-  reactionsOpen: true,  // right-side reactions panel visibility
-  panelW: 0,           // desktop reactions panel width in px
+  reactionsOpen: false, // full-screen reactions sheet visibility
   busyEval: false,
   voiceTyped: false,  // reaction text came from the mic
   listening: false,
@@ -45,9 +44,9 @@ const els = {
   reading: $('reading'),
   reactions: $('reactions'), reactHint: $('react-hint'),
   reactText: $('react-text'), btnMic: $('btn-mic'), btnSend: $('btn-send'),
-  // mobile reactions overlay
+  // full-screen reactions sheet
   reactionsCol: $('reactions-col'), btnReactions: $('btn-reactions'),
-  btnCloseReactions: $('btn-close-reactions'), resizer: $('reactions-resizer'),
+  btnCloseReactions: $('btn-close-reactions'),
   // modals
   sourceModal: $('source-modal'), settingsModal: $('settings-modal'),
   pasteText: $('paste-text'), loadPaste: $('load-paste'),
@@ -103,11 +102,14 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// ---------- reactions panel: collapsible (FAB toggle), resizable on desktop ----------
+// ---------- reactions sheet: one full-screen overlay, same on desktop & mobile ----------
+// It covers the reading pane so you write from memory; “React here” opens it and
+// “Show text” (or Esc) takes you back to the text.
 function setReactionsOpen(open) {
   state.reactionsOpen = open;
   document.body.classList.toggle('reactions-closed', !open);
   els.reactionsCol.classList.toggle('open', open);
+  els.btnReactions.classList.toggle('hidden', open); // pill shows only while the sheet is hidden
   if (open) {
     scrollBottom(els.reactions);
   } else if (recognition && state.listening) {
@@ -117,54 +119,40 @@ function setReactionsOpen(open) {
 }
 function openReactions() { setReactionsOpen(true); }
 function closeReactions() { setReactionsOpen(false); }
-function toggleReactions() { setReactionsOpen(!state.reactionsOpen); }
-els.btnReactions.addEventListener('click', toggleReactions);
+
+// Focus the reaction input. A hidden/disabled field refuses focus silently, so
+// this retries across the next few frames — and stops the moment the user has
+// deliberately focused something else (or closed the sheet).
+function focusComposer() {
+  const put = () => {
+    const ta = els.reactText;
+    if (!state.reactionsOpen || ta.disabled) return false;
+    const cur = document.activeElement;
+    if (cur && cur !== ta && cur !== document.body && cur.tagName !== 'BUTTON') return false;
+    ta.focus();
+    if (typeof ta.setSelectionRange === 'function') {
+      const end = ta.value.length;
+      try { ta.setSelectionRange(end, end); } catch { /* not selectable */ }
+    }
+    return document.activeElement === ta;   // did it actually take?
+  };
+  put();                                     // works as soon as the sheet is shown
+  requestAnimationFrame(put);
+  setTimeout(put, 120);
+  setTimeout(put, 320);                      // after the slide-in finishes
+}
+els.btnReactions.addEventListener('click', () => {
+  // the pill is a read-only look at past reactions — it never arms a new one,
+  // so a half-written reaction can’t linger behind the sheet
+  if (state.reactionsOpen) { closeReactions(); return; }
+  if (state.pending) {
+    state.pending = null;
+    setStatus('Press “React here” to write a reaction from memory');
+  }
+  openReactions();
+  updateControls();
+});
 els.btnCloseReactions.addEventListener('click', closeReactions);
-
-// drag the divider between reader and reactions to resize the panel
-function clampPanelW(w) {
-  const maxW = Math.round(window.innerWidth * 0.7);
-  return Math.min(Math.max(Math.round(w), 280), maxW);
-}
-function applyPanelW(w) {
-  state.panelW = clampPanelW(w);
-  document.documentElement.style.setProperty('--panel-w', state.panelW + 'px');
-}
-let dragW = null;
-function onResizeMove(e) {
-  if (!dragW) return;
-  applyPanelW(dragW.startW + (dragW.startX - e.clientX));
-}
-function onResizeUp() {
-  dragW = null;
-  document.body.classList.remove('reactions-resizing');
-  document.removeEventListener('pointermove', onResizeMove);
-}
-els.resizer.addEventListener('pointerdown', (e) => {
-  if (window.innerWidth <= 1000) return;
-  e.preventDefault();
-  dragW = { startX: e.clientX, startW: state.panelW || 400 };
-  document.body.classList.add('reactions-resizing');
-  document.addEventListener('pointermove', onResizeMove);
-  document.addEventListener('pointerup', onResizeUp, { once: true });
-});
-
-function initReactionsPanel() {
-  if (window.innerWidth > 1000) {
-    // desktop: panel open by default, width ~38% of the window
-    applyPanelW(Math.min(Math.max(Math.round(window.innerWidth * 0.38), 360), 560));
-  } else {
-    // mobile: collapsed — the FAB opens the full-screen sheet
-    setReactionsOpen(false);
-  }
-}
-window.addEventListener('resize', () => {
-  if (window.innerWidth <= 1000) {
-    if (state.reactionsOpen) setReactionsOpen(false); // side panel doesn't exist here
-  } else {
-    if (!state.panelW) initReactionsPanel();
-  }
-});
 
 // ============================================================
 // SETTINGS: theme + provider cards
@@ -881,11 +869,17 @@ els.btnReact.addEventListener('click', () => {
   if (state.markerP < 0) { setStatus('Click a paragraph to set your spot first', 'error'); return; }
   if (state.busyEval) { setStatus('Wait for the current evaluation to finish', 'error'); return; }
   stopTTS();
+  const rearming = !state.pending || state.pending.markerP !== state.markerP;
   state.pending = { markerP: state.markerP };
-  state.voiceTyped = false;
+  if (rearming) {
+    state.voiceTyped = false;
+    els.reactText.value = '';
+    autoGrowComposer();
+  }
+  openReactions();          // full screen: the text is now out of sight — recall from memory
   updateControls();
-  els.reactText.focus();
-  setStatus(`Reaction position locked at ¶ ${state.markerP + 1} — type or speak`, 'success');
+  focusComposer();          // caret is ready the moment the sheet is up
+  setStatus(`Reacting at ¶ ${state.markerP + 1} — the text is hidden, write from memory`, 'success');
 });
 
 els.reactText.addEventListener('input', updateControls);
@@ -954,13 +948,12 @@ function updateControls() {
 
   els.btnExport.disabled = state.reactions.length === 0;
   if (els.btnExport.disabled) closeExportMenu();
-
   if (state.pending) {
-    els.reactHint.textContent = `Reacting at ¶ ${state.pending.markerP + 1} — everything up to it is the evaluated context.`;
+    els.reactHint.textContent = `Reacting at ¶ ${state.pending.markerP + 1} — the text is covered, so recall it from memory. “Show text” brings it back.`;
   } else if (state.busyEval) {
     els.reactHint.textContent = 'Evaluating your reaction…';
   } else {
-    els.reactHint.textContent = 'Click a paragraph to set your spot, then press "React here."';
+    els.reactHint.textContent = 'Click a paragraph to set your spot, then press "React here" to write from memory.';
   }
 }
 
@@ -1372,7 +1365,7 @@ async function init() {
   renderProviderCards();    // model <option>s use the saved per-provider picks
   draftFromPrefs();
   applyDraftToInputs();     // the modal opens on exactly what is stored
-  initReactionsPanel();
+  setReactionsOpen(false);  // the sheet stays out of the way until “React here”
   consumePendingGrab();
   updateControls();
   autoGrowComposer();

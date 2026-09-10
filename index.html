@@ -47,14 +47,15 @@
           or click the extension’s <b>toolbar icon while on a webpage</b> to load that page’s text.
         </div>
       </div>
-      <button id="btn-reactions" class="reactions-fab" title="Open / close reactions"><span class="ic ic-msg" aria-hidden="true"></span>Reactions</button>
+      <button id="btn-reactions" class="reactions-fab" title="Open the reactions panel"><span class="ic ic-msg" aria-hidden="true"></span>Reactions</button>
     </section>
 
-    <!-- reactions: reactions + evaluations + composer -->
+    <!-- reactions: a full-screen sheet — identical on desktop & mobile. It covers
+         the text so you recall from memory, and “React here” opens it. -->
     <section class="reactions-col" id="reactions-col">
-      <div id="reactions-resizer" class="reactions-resizer" title="Drag to resize"></div>
       <div class="reactions-head">
         <span class="head-title">Reactions</span>
+        <span class="recall-badge" title="The source text is covered while you write"><span class="ic ic-eye-off" aria-hidden="true"></span>Recall from memory</span>
         <div class="spacer"></div>
         <div class="head-actions">
           <div class="menu-wrap">
@@ -64,7 +65,7 @@
               <button class="menu-item" data-format="markdown" role="menuitem">Markdown</button>
             </div>
           </div>
-          <button id="btn-close-reactions" class="btn icon-btn" title="Close reactions" aria-label="Close reactions">✕</button>
+          <button id="btn-close-reactions" class="btn compact" title="Back to the text"><span class="ic ic-eye" aria-hidden="true"></span>Show text</button>
         </div>
       </div>
       <div id="reactions" class="reactions">

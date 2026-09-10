@@ -115,6 +115,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .ic-stop     { --icon: url('icons/stop.svg'); }
 .ic-mic      { --icon: url('icons/mic.svg'); }
 .ic-send     { --icon: url('icons/send.svg'); }
+.ic-eye      { --icon: url('icons/eye.svg'); }
+.ic-eye-off  { --icon: url('icons/eye-off.svg'); }
 .ic-download { --icon: url('icons/download.svg'); }
 /* the mic glyph is a shade small for a 16px box */
 #btn-mic .ic-mic { width: 17px; height: 17px; }
@@ -141,13 +143,12 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--a
 .mini-label { font-size: 11px; color: var(--text-dim); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
 #api-error { font-size: 12px; color: var(--error); min-height: 14px; margin-top: 6px; }
 
-/* ---------- horizontal split ---------- */
+/* ---------- single column: the reader owns the screen; reactions slide over it ---------- */
 .split {
   flex: 1 1 auto; min-height: 0; overflow: hidden;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) var(--panel-w, 400px);
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr);
-  transition: grid-template-columns 0.2s ease;
 }
 
 /* reader column */
@@ -191,10 +192,26 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--a
 /* center the placeholder messages inside their pane */
 .reading > .empty-state, .reactions > .empty-state { margin: auto 0; }
 
-/* reactions column */
+/* reactions sheet: a full-screen overlay over the reader — the same on desktop
+   and mobile. Hidden until “React here” (or the pill) brings it up, so the text
+   is out of sight while you recall. */
 .reactions-col {
+  position: fixed; inset: 0; z-index: 60;
   display: flex; flex-direction: column; min-width: 0; min-height: 0;
-  border-left: 1px solid var(--border); background: var(--bg);
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  transform: translateY(100%);
+  visibility: hidden;
+  /* visibility must NOT be transitioned: while it was, the sheet stayed hidden
+     for the whole slide and anything inside it silently refused focus. Closing
+     still waits for the slide-out before it truly disappears. */
+  transition: transform 0.22s ease, visibility 0s linear 0.22s;
+  box-shadow: var(--shadow);
+}
+.reactions-col.open {
+  transform: translateY(0);
+  visibility: visible;
+  transition: transform 0.22s ease, visibility 0s linear 0s;
 }
 .reactions-head {
   flex: 0 0 auto; height: 48px; padding: 0 16px; box-sizing: border-box;
@@ -206,10 +223,19 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--a
   font-size: 14px; font-weight: 650; color: var(--text);
   letter-spacing: 0.01em; white-space: nowrap;
 }
-/* resize handle between reader and reactions — desktop only */
-.reactions-resizer { display: none; }
+/* “Recall from memory” marker — the sheet hides the text by design */
+.recall-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 10px; border-radius: 999px; white-space: nowrap;
+  background: var(--panel-2); border: 1px solid var(--border);
+  color: var(--text-dim); font-size: 11.5px; font-weight: 600;
+}
+.recall-badge .ic { width: 14px; height: 14px; }
+/* the sheet is full width now, so the bubbles and composer breathe a little more */
+.composer { padding: 10px 18px 14px; }
+#react-hint { font-size: 12px; }
 
-/* floating “Reactions” pill — opens the panel (desktop & mobile) */
+/* floating “Reactions” pill — opens the sheet when it is hidden */
 .reactions-fab {
   display: inline-flex; align-items: center; gap: 7px;
   position: fixed; right: 16px; bottom: 16px; z-index: 45;
@@ -221,7 +247,7 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--a
 .reactions-fab:hover { background: var(--accent-hover); }
 .reactions {
   flex: 1 1 auto; min-height: 0; overflow-y: auto;
-  padding: 4px 14px 10px; display: flex; flex-direction: column; gap: 10px;
+  padding: 14px 18px 12px; display: flex; flex-direction: column; gap: 10px;
   overscroll-behavior: contain;
 }
 
@@ -363,55 +389,18 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--a
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
 
-/* desktop: collapsible + resizable reactions panel */
-@media (min-width: 1001px) {
-  .reactions-col { position: relative; }
-  .reactions-resizer {
-    display: block; position: absolute; top: 0; bottom: 0; left: -4px;
-    width: 9px; cursor: col-resize; z-index: 6;
-  }
-  .reactions-resizer::after {
-    content: ""; position: absolute; left: 3px; top: 0; bottom: 0; width: 3px;
-    background: transparent; transition: background 0.15s;
-  }
-  .reactions-resizer:hover::after,
-  body.reactions-resizing .reactions-resizer::after { background: var(--accent); }
-  body.reactions-resizing { cursor: col-resize; user-select: none; }
+/* One layout everywhere: the reactions sheet and the reader behave identically
+   at every width, so there is no desktop/mobile divergence left to style. */
+/* keep toasts clear of the floating pill */
+body.reactions-closed .toast { bottom: 84px; }
 
-  /* collapsed: reader takes everything, FAB shows */
-  body.reactions-closed .split { grid-template-columns: minmax(0, 1fr); }
-  body.reactions-closed .reactions-col { display: none; }
-  body.reactions-closed .reactions-fab { display: inline-flex; }
-  body:not(.reactions-closed) .reactions-fab { display: none; }
-  /* keep toasts clear of the FAB while collapsed */
-  body.reactions-closed .toast { bottom: 84px; }
-}
-
-/* mobile / narrow: reader fills the screen, reactions becomes a
-   full-screen overlay opened by a floating button */
+/* narrow: full-screen modals and tighter reading padding */
 @media (max-width: 1000px) {
-  .split { display: block; overflow: visible; }
-  .reader-col { height: 100%; }
-
-  .reactions-col {
-    position: fixed; inset: 0; z-index: 60;
-    border-left: none; border-top: 1px solid var(--border);
-    transform: translateY(100%);
-    visibility: hidden;
-    transition: transform 0.25s ease, visibility 0.25s ease;
-    box-shadow: var(--shadow);
-  }
-  .reactions-col.open { transform: translateY(0); visibility: visible; }
-
-  /* modals go full screen on mobile */
   .modal-overlay { padding: 0; align-items: stretch; }
   .modal {
     width: 100%; height: 100%; max-height: none;
     border-radius: 0; border: none; box-shadow: none;
   }
-
-  /* toast sits above the reactions FAB on mobile */
-  .toast { bottom: 84px; }
 }
 
 /* narrow phones: tighter reading padding */
