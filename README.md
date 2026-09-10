@@ -35,7 +35,7 @@ the one thing that leaves your machine — see [Privacy](#privacy).
 | Evaluation | BYOK across **OpenAI** (`o3-mini` / `o4-mini` / `gpt-4o`), **Claude** (`claude-sonnet-5` / `claude-opus-5` / `claude-haiku-4-5` / `claude-fable-5-1`), **Google Gemini** (`gemini-3.8-flash` / `gemini-3.1-pro` / …), **DeepSeek** (`deepseek-reasoner` / `deepseek-chat`), **Kimi** (`kimi-k3` / `kimi-k2.6`) and **Mistral**; unsupported models/params fall back automatically |
 | Scoring | Accuracy · Understanding · Coverage · Unsupported inference · Incorrect claims · Missed points · Overall — plus a **suggested better summary** |
 | Export | **Export** dropdown in the reactions sheet header → JSON + Markdown downloaded directly from the browser |
-| Storage | Session data: none — page memory only. Settings: written only when you press **Save** (extension-private `chrome.storage.local`), deleted completely by “Forget saved keys” |
+| Storage | Session data: none — page memory only. Settings are written only when you press **Save** — into `chrome.storage.local` in the extension, or `localStorage` in a plain browser tab — and survive reloads and restarts in both. “Forget saved keys” erases the keys alone |
 
 ## Files
 
@@ -199,10 +199,12 @@ the Chrome Web Store listing. In short:
   `api.deepseek.com`, `api.moonshot.ai`, `api.mistral.ai`) when you run an
   evaluation. There is no analytics, no telemetry and no update check.
 - API keys are read on demand from the Settings inputs and only ever sent to the
-  provider you picked. They are written to storage **only when you press Save**.
-  Once saved they live in this extension's private `chrome.storage.local` —
-  sites and other extensions cannot read that area — and **Forget saved keys**
-  deletes them from the browser entirely.
+  provider you picked. They are written to storage **only when you press Save**,
+  so a key is entered once rather than on every visit. In the extension they live
+  in its private `chrome.storage.local` — sites and other extensions cannot read
+  that area. In a plain browser tab they live in the browser's `localStorage` for
+  that origin, which any page on the same origin can read. **Forget saved keys**
+  deletes them from the browser entirely in both builds.
 - A pasted key is cleaned of characters a key can never contain — curly quotes,
   em dashes, non-breaking spaces, zero-width joiners — because `fetch()` refuses
   any header value carrying a code point above `U+00FF`, and the error it raises

@@ -13,8 +13,9 @@ anywhere.
 - Nothing is sent to us. We operate no servers and receive no data.
 - Your source text, reactions and evaluations live in the tab's memory and are
   gone when you close it.
-- Your API keys are stored only in your own browser's extension storage, and are
-  sent only to the AI provider you chose.
+- Your API keys are stored only in your own browser, and are sent only to the AI
+  provider you chose. In the extension that is a storage area private to it; in a
+  plain browser tab it is the browser's `localStorage` for that page's origin.
 - Two things leave your machine, and only when you ask for them: a request to
   your chosen AI provider when you run an evaluation, and — if you use voice
   input — your microphone audio to Google for transcription.
@@ -27,14 +28,19 @@ Reaction Learner is "bring your own key": you paste an API key for an AI provide
 (OpenAI, Anthropic, Google, DeepSeek, Moonshot or Mistral). A key is:
 
 - **read** from the Settings field when you run an evaluation;
-- **stored** in `chrome.storage.local` — this extension's own private storage
-  area, which websites and other extensions cannot read — and **only when you
-  press Save**. If you never press Save, the key is never written anywhere;
+- **stored** only when you press Save, so you enter a key once instead of on every
+  visit. In the extension that is `chrome.storage.local` — this extension's own
+  private storage area, which websites and other extensions cannot read. In a
+  plain browser tab it is the browser's `localStorage` for that page's origin,
+  which any page on the same origin can read; the extension is the more private
+  option for that reason. If you never press Save, the key is never written
+  anywhere;
 - **sent** only to that provider's API endpoint, as the `Authorization` header of
   the request you asked for. It is never sent to us or to any other party.
 
-Pressing **Forget saved keys** deletes every stored key from your browser.
-Uninstalling the extension also removes this storage.
+Pressing **Forget saved keys** deletes every stored key from your browser, in
+either build. Uninstalling the extension removes the extension's storage, and
+clearing site data removes the browser-tab copy.
 
 ### Source text and reactions
 
@@ -108,9 +114,21 @@ are: [OpenAI](https://openai.com/policies/privacy-policy),
 
 ## Retention and deletion
 
-We retain nothing. Data held in the page disappears when you close the tab.
-Data in extension storage is removed by **Forget saved keys**, or by uninstalling
-the extension. Exported files are yours to delete.
+We retain nothing. Source text, your marked position and your reactions live in
+the page and disappear when you close the tab.
+
+Saved settings — your API keys, chosen provider, chosen models and appearance —
+persist until you erase them, so you enter a key once rather than on every visit.
+They are removed by **Forget saved keys** in Settings, which erases the keys and
+leaves your other preferences standing. Uninstalling the extension removes
+everything it stored; clearing site data does the same for the browser-tab build.
+Exported files are yours to delete.
+
+In the extension those settings live in `chrome.storage.local`, a storage area
+private to the extension. In a plain browser tab (the hosted page, or
+`index.html` opened from disk) they live in the browser's `localStorage` for that
+origin — which means any other page served from the same origin can read them.
+That is the reason the extension exists as the more private option.
 
 ## Permissions
 

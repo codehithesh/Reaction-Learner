@@ -96,8 +96,8 @@ async function saveSettings() {
   const note = dropped
     ? ` — dropped ${dropped} character${dropped === 1 ? '' : 's'} that cannot be in a key`
     : '';
-  if (isExt) setStatus('Saved — keys, provider, models and appearance kept in this browser' + note, 'success');
-  else setStatus('Saved for this session — a plain browser tab cannot store keys privately' + note, 'success');
+  // both builds persist now — only the storage area behind them differs
+  setStatus('Saved — keys, provider, models and appearance kept in this browser' + note, 'success');
   closeModal(els.settingsModal);
 }
 
