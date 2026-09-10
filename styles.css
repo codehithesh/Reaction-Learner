@@ -92,6 +92,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .btn.primary:hover:not(:disabled) { background: var(--accent-hover); }
 .btn.compact { height: 34px; padding: 0 10px; font-size: 12.5px; border-radius: 6px; }
 .btn.icon { height: 34px; padding: 0 8px; font-size: 13px; }
+/* square icon-only button — label text stays in the tooltip / aria-label */
+.btn.icon-btn { width: 34px; padding: 0; flex: none; }
 
 /* ---------- icon glyphs: single-color SVG files tinted via mask ---------- */
 .ic {
@@ -111,6 +113,11 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .ic-play     { --icon: url('icons/play.svg'); }
 .ic-pause    { --icon: url('icons/pause.svg'); }
 .ic-stop     { --icon: url('icons/stop.svg'); }
+.ic-mic      { --icon: url('icons/mic.svg'); }
+.ic-send     { --icon: url('icons/send.svg'); }
+.ic-download { --icon: url('icons/download.svg'); }
+/* the mic glyph is a shade small for a 16px box */
+#btn-mic .ic-mic { width: 17px; height: 17px; }
 
 .seg { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; width: 100%; }
 .seg-btn {
@@ -193,6 +200,7 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--a
   flex: 0 0 auto; height: 48px; padding: 0 16px; box-sizing: border-box;
   background: var(--panel); border-bottom: 1px solid var(--border);
   display: flex; align-items: center; gap: 12px;
+  overflow: visible; /* lets the export menu escape the header */
 }
 .reactions-head .head-title {
   font-size: 14px; font-weight: 650; color: var(--text);
@@ -240,27 +248,41 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--a
 .loader { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--text-dim); border-top-color: var(--text); border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 8px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* composer */
+/* composer — one row: growing input + mic + send */
 .composer {
   flex: 0 0 auto; border-top: 1px solid var(--border); background: var(--panel);
-  padding: 10px 14px 12px; display: flex; flex-direction: column; gap: 10px;
+  padding: 10px 14px 12px; display: flex; flex-direction: column; gap: 8px;
 }
 #react-hint { font-size: 11.5px; }
-.composer-btns { display: flex; gap: 10px; align-items: center; }
-/* export picker next to the mic — looks like a button, opens the OS dropdown */
-.export-select {
-  width: auto; height: 34px; cursor: pointer;
-  padding: 0 30px 0 12px; border-radius: 8px;
-  background: var(--panel-2); border: 1px solid var(--border);
-  color: var(--text); font-size: 13px;
+.composer-row { display: flex; align-items: flex-end; gap: 8px; }
+#react-text {
+  flex: 1 1 auto; min-width: 0; resize: none; overflow-y: hidden;
+  min-height: 34px; max-height: 140px;
 }
-.export-select:hover:not(:disabled) { background: var(--border); }
-.export-select:disabled { opacity: 0.4; cursor: not-allowed; }
-#react-text { resize: none; }
+#react-text.grown { overflow-y: auto; }
 #btn-mic.listening { background: var(--record); color: #fff; border-color: var(--record); animation: pulse 1.4s infinite; }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.65; } }
-.record-dot { display: inline-block; width: 8px; height: 8px; background: var(--record); border-radius: 50%; margin-right: 6px; }
-#btn-mic.listening .record-dot { background: #fff; }
+/* while recording the button widens to show the state next to the mic glyph */
+.rec-label { display: none; font-size: 12.5px; font-weight: 600; }
+#btn-mic.listening { width: auto; padding: 0 12px; }
+#btn-mic.listening .rec-label { display: inline; }
+
+/* header action cluster + dropdown menu (used by the Activity header) */
+.head-actions { display: flex; align-items: center; gap: 8px; flex: none; }
+.menu-wrap { position: relative; display: inline-flex; }
+.menu {
+  position: absolute; top: calc(100% + 6px); right: 0; z-index: 70;
+  min-width: 150px; padding: 4px;
+  background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px;
+  box-shadow: var(--shadow);
+  display: flex; flex-direction: column; gap: 2px;
+}
+.menu-item {
+  display: block; width: 100%; text-align: left;
+  background: none; border: none; color: var(--text);
+  font-size: 13px; padding: 8px 10px; border-radius: 7px; cursor: pointer;
+}
+.menu-item:hover { background: var(--border); }
 
 /* ---------- modals ---------- */
 .modal-overlay {

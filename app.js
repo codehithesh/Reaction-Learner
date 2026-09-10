@@ -36,8 +36,8 @@ const state = {
 const $ = (id) => document.getElementById(id);
 const els = {
   toast: $('toast'),
-  btnSettings: $('btn-settings'),
-  exportSelect: $('export-select'),
+  btnSettings: $('btn-settings'), btnSaveSettings: $('btn-save-settings'), btnCloseSettings: $('btn-close-settings'),
+  exportMenu: $('export-menu'), btnExport: $('btn-export'),
   btnSource: $('btn-source'),
   readPos: $('read-pos'), btnReact: $('btn-react'),
   voiceSelect: $('voice-select'), rateSelect: $('rate-select'),
@@ -99,6 +99,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     document.querySelectorAll('.modal-overlay:not(.hidden)').forEach((ov) => closeModal(ov));
     if (els.reactionsCol.classList.contains('open')) closeReactions();
+    closeExportMenu();
   }
 });
 
@@ -168,28 +169,30 @@ window.addEventListener('resize', () => {
 // ============================================================
 // SETTINGS: theme + provider cards
 // ============================================================
-// Appearance: follow the OS, or force light / dark. The choice is in-memory.
+// Appearance: follow the OS, or force light / dark. Switching previews the
+// theme immediately, but the choice is only remembered when you press Save.
 const darkMQ = window.matchMedia('(prefers-color-scheme: dark)');
-let themePref = 'system'; // 'system' | 'light' | 'dark'
+// the theme currently on screen (may be an unsaved preview)
+let uiThemePref = 'system'; // 'system' | 'light' | 'dark'
 function effectiveTheme() {
-  if (themePref === 'light') return 'light';
-  if (themePref === 'dark') return 'dark';
+  if (uiThemePref === 'light') return 'light';
+  if (uiThemePref === 'dark') return 'dark';
   return darkMQ.matches ? 'dark' : 'light';
 }
 function renderTheme() {
   document.documentElement.setAttribute('data-theme', effectiveTheme());
-  els.themeSystem.classList.toggle('active', themePref === 'system');
-  els.themeLight.classList.toggle('active', themePref === 'light');
-  els.themeDark.classList.toggle('active', themePref === 'dark');
+  els.themeSystem.classList.toggle('active', uiThemePref === 'system');
+  els.themeLight.classList.toggle('active', uiThemePref === 'light');
+  els.themeDark.classList.toggle('active', uiThemePref === 'dark');
 }
-function setThemePref(p) {
-  themePref = p;
+function previewThemePref(p) {
+  uiThemePref = p;
   renderTheme();
 }
-els.btnSettings.addEventListener('click', () => openModal(els.settingsModal));
-els.themeSystem.addEventListener('click', () => setThemePref('system'));
-els.themeLight.addEventListener('click', () => setThemePref('light'));
-els.themeDark.addEventListener('click', () => setThemePref('dark'));
+function syncThemePref() { previewThemePref(prefs ? prefs.theme : 'system'); }
+els.themeSystem.addEventListener('click', () => previewThemePref('system'));
+els.themeLight.addEventListener('click', () => previewThemePref('light'));
+els.themeDark.addEventListener('click', () => previewThemePref('dark'));
 if (darkMQ.addEventListener) darkMQ.addEventListener('change', renderTheme); // live OS switch
 
 // ============================================================
@@ -288,12 +291,16 @@ const PROVIDER_MAP = Object.fromEntries(PROVIDERS.map((p) => [p.id, p]));
 function providerInput(id) { return document.getElementById('key-' + id); }
 function providerModel(id) { return document.getElementById('model-' + id); }
 
+function modelOptions(p, selected) {
+  const def = selected || p.def || p.models[0].v;
+  return p.models.map((m) =>
+    `<option value="${m.v}"${m.v === def ? ' selected' : ''}>${m.l}</option>`
+  ).join('');
+}
+
 function renderProviderCards() {
   els.providerList.innerHTML = PROVIDERS.map((p) => {
-    const def = p.def || p.models[0].v;
-    const opts = p.models.map((m) =>
-      `<option value="${m.v}"${m.v === def ? ' selected' : ''}>${m.l}</option>`
-    ).join('');
+    const opts = modelOptions(p, draft ? draft.models[p.id] : '');
     return `
       <div class="provider-card${p.id === state.provider ? ' active' : ''}" data-provider="${p.id}">
         <div class="pc-head">
@@ -310,24 +317,32 @@ function renderProviderCards() {
   }).join('\n');
 }
 
+// Edits made inside the modal only touch the draft (see prefs below).
 // Pick a provider: click its header, or focus its key field / model list.
 els.settingsModal.addEventListener('click', (e) => {
   const head = e.target.closest('.pc-head');
-  if (head) setProvider(head.closest('.provider-card').dataset.provider);
+  if (head) selectProvider(head.closest('.provider-card').dataset.provider);
 });
 els.settingsModal.addEventListener('focusin', (e) => {
   const card = e.target.closest('.provider-card');
-  if (card && e.target.matches('input, select')) setProvider(card.dataset.provider);
+  if (card && draft && e.target.matches('input, select')) selectProvider(card.dataset.provider);
 });
+// typing a key never writes to storage — Save does that
 els.settingsModal.addEventListener('input', (e) => {
   if (e.target.matches('input[type="password"]')) {
     setApiError('');
     updateForgetBtn();
-    scheduleKeySave();
+  }
+});
+// remembering a model choice is part of the draft too
+els.settingsModal.addEventListener('change', (e) => {
+  if (draft && e.target.matches('select[id^="model-"]')) {
+    draft.models[e.target.id.slice('model-'.length)] = e.target.value;
   }
 });
 
-function setProvider(prov) {
+function selectProvider(prov) {
+  if (draft) draft.provider = prov;
   state.provider = prov;
   document.querySelectorAll('.provider-card').forEach((card) => {
     card.classList.toggle('active', card.dataset.provider === prov);
@@ -346,68 +361,180 @@ function activeProvider() {
 }
 
 // ============================================================
-// KEY PERSISTENCE — extension-private chrome.storage.local
+// SAVE STORE — extension-private chrome.storage.local
 // ============================================================
-// Keys you type are saved here (debounced), survive browser restarts,
-// and are deleted completely by “Forget saved keys”. Not encrypted on
-// purpose: this storage area is already private to the extension — a
-// stored encryption key would protect against nothing extra.
-let saveKeysTimer = null;
+// The settings modal edits `draft`; nothing reaches storage until you press
+// Save. Saving remembers all of it: API keys, the chosen provider, the chosen
+// model per provider, and the light/dark appearance choice. “Forget saved
+// keys” erases the keys alone and leaves those preferences standing.
+// Keys are not encrypted on purpose: this storage area is already private to
+// the extension — a stored encryption key would protect against nothing extra.
+const STORE = {
+  keys: 'rlApiKeys',
+  provider: 'rlProvider',
+  models: 'rlModels',
+  theme: 'rlTheme',
+};
+const THEMES = ['system', 'light', 'dark'];
+
+let prefs = null;  // what is currently stored (or would be, in a plain tab)
+let draft = null;  // what the open settings modal is editing
+
+function blankPrefs() {
+  return { keys: {}, provider: state.provider, models: {}, theme: 'system' };
+}
+
+function shapePrefs(raw) {
+  const p = blankPrefs();
+  if (raw.keys && typeof raw.keys === 'object') {
+    for (const prov of PROVIDERS) {
+      const v = raw.keys[prov.id];
+      if (typeof v === 'string' && v.trim()) p.keys[prov.id] = v.trim();
+    }
+  }
+  if (PROVIDER_MAP[raw.provider]) p.provider = raw.provider;
+  if (raw.models && typeof raw.models === 'object') {
+    for (const prov of PROVIDERS) {
+      const m = raw.models[prov.id];
+      if (typeof m === 'string' && prov.models.some((x) => x.v === m)) p.models[prov.id] = m;
+    }
+  }
+  if (THEMES.indexOf(raw.theme) >= 0) p.theme = raw.theme;
+  return p;
+}
+
+async function loadPrefs() {
+  let raw = {};
+  if (isExt) {
+    try { raw = await chrome.storage.local.get(Object.values(STORE)) || {}; } catch { raw = {}; }
+  } else {
+    // plain browser tab: no private storage for keys, but keep the rest
+    try {
+      raw = {
+        [STORE.provider]: localStorage.getItem(STORE.provider) || undefined,
+        [STORE.models]: JSON.parse(localStorage.getItem(STORE.models) || 'null'),
+        [STORE.theme]: localStorage.getItem(STORE.theme) || undefined,
+      };
+    } catch { raw = {}; }
+  }
+  prefs = shapePrefs({
+    keys: raw[STORE.keys],
+    provider: raw[STORE.provider],
+    models: raw[STORE.models],
+    theme: raw[STORE.theme],
+  });
+  return prefs;
+}
+
+async function writePrefs(p) {
+  const keys = Object.keys(p.keys).length ? p.keys : null;
+  const models = Object.keys(p.models).length ? p.models : null;
+  if (!isExt) {
+    // nowhere private to keep keys — remember provider/model/theme for the next session
+    try {
+      localStorage.setItem(STORE.provider, p.provider);
+      localStorage.setItem(STORE.theme, p.theme);
+      if (models) localStorage.setItem(STORE.models, JSON.stringify(models));
+      else localStorage.removeItem(STORE.models);
+    } catch { /* ignore */ }
+    return;
+  }
+  try {
+    await chrome.storage.local.set({ [STORE.provider]: p.provider, [STORE.theme]: p.theme });
+    if (models) await chrome.storage.local.set({ [STORE.models]: models });
+    else await chrome.storage.local.remove(STORE.models);
+    if (keys) await chrome.storage.local.set({ [STORE.keys]: keys });
+    else await chrome.storage.local.remove(STORE.keys); // emptied → gone for good
+  } catch { /* storage unavailable — stay in-memory only */ }
+}
+
+function savedKeys() { return (prefs && prefs.keys) || {}; }
 
 function updateForgetBtn() {
+  const anySaved = Object.keys(savedKeys()).length > 0;
   const anyTyped = PROVIDERS.some((p) => {
     const el = providerInput(p.id);
     return !!el && !!el.value.trim();
   });
-  els.btnForgetKeys.disabled = !anyTyped;
+  els.btnForgetKeys.disabled = !anySaved && !anyTyped;
 }
 
-function scheduleKeySave() {
-  if (!isExt) return;
-  clearTimeout(saveKeysTimer);
-  saveKeysTimer = setTimeout(persistKeys, 400);
+// the modal always opens on exactly what is stored
+function draftFromPrefs() {
+  draft = {
+    keys: Object.assign({}, prefs.keys),
+    provider: prefs.provider,
+    models: Object.assign({}, prefs.models),
+    theme: prefs.theme,
+  };
 }
 
-async function persistKeys() {
-  if (!isExt) return;
-  const keys = {};
+function applyDraftToInputs() {
+  if (!draft) return;
   for (const p of PROVIDERS) {
-    const v = providerInput(p.id).value.trim();
-    if (v) keys[p.id] = v;
+    providerInput(p.id).value = draft.keys[p.id] || '';
+    const def = draft.models[p.id] || p.def || p.models[0].v;
+    const sel = providerModel(p.id);
+    if (p.models.some((m) => m.v === def)) sel.value = def;
   }
-  try {
-    if (Object.keys(keys).length) await chrome.storage.local.set({ rlApiKeys: keys });
-    else await chrome.storage.local.remove('rlApiKeys'); // emptied → gone for good
-  } catch { /* storage unavailable — stay in-memory only */ }
+  selectProvider(draft.provider);
+  previewThemePref(draft.theme);
+  updateForgetBtn();
 }
+
+async function saveSettings() {
+  if (draft) {
+    for (const p of PROVIDERS) {
+      const v = providerInput(p.id).value.trim();
+      if (v) draft.keys[p.id] = v; else delete draft.keys[p.id];
+      draft.models[p.id] = providerModel(p.id).value;
+    }
+    draft.provider = state.provider;
+    draft.theme = uiThemePref;
+  }
+  prefs = shapePrefs(draft || prefs);
+  await writePrefs(prefs);
+  syncThemePref();
+  updateForgetBtn();
+  if (isExt) setStatus('Saved — keys, provider, models and appearance kept in this browser', 'success');
+  else setStatus('Saved for this session — a plain browser tab cannot store keys privately', 'success');
+  closeModal(els.settingsModal);
+}
+
+// closed without saving → every pending edit is discarded
+function closeSettings() {
+  closeModal(els.settingsModal);
+  if (!prefs) return;
+  draftFromPrefs();
+  applyDraftToInputs();
+  setApiError('');
+}
+
+els.btnSettings.addEventListener('click', () => {
+  if (!prefs) prefs = blankPrefs();
+  draftFromPrefs();
+  applyDraftToInputs();
+  setApiError('');
+  openModal(els.settingsModal);
+});
+els.btnSaveSettings.addEventListener('click', saveSettings);
+els.btnCloseSettings.addEventListener('click', closeSettings);
 
 async function forgetKeys() {
-  clearTimeout(saveKeysTimer);
   for (const p of PROVIDERS) providerInput(p.id).value = '';
-  setApiError('');
+  const wasDraft = draft;
+  if (wasDraft) wasDraft.keys = {};
+  // only the keys go: provider / model / appearance picks are a separate choice
+  prefs = shapePrefs(wasDraft || prefs || {});
+  draftFromPrefs();
   updateForgetBtn();
+  setApiError('');
   if (isExt) {
-    try { await chrome.storage.local.remove('rlApiKeys'); } catch { /* ignore */ }
+    try { await chrome.storage.local.remove(STORE.keys); } catch { /* ignore */ }
   }
   setStatus('Saved API keys erased from this browser', 'success');
 }
 els.btnForgetKeys.addEventListener('click', forgetKeys);
-
-async function loadSavedKeys() {
-  if (!isExt) return;
-  try {
-    const { rlApiKeys } = await chrome.storage.local.get('rlApiKeys');
-    if (!rlApiKeys) return;
-    let any = false;
-    for (const p of PROVIDERS) {
-      if (rlApiKeys[p.id]) { providerInput(p.id).value = rlApiKeys[p.id]; any = true; }
-    }
-    if (any) {
-      updateForgetBtn();
-      setStatus('Saved API keys restored — open Settings to review or erase them', 'success');
-    }
-  } catch { /* ignore */ }
-}
 
 // ============================================================
 // SOURCE: paste (modal) or grabbed page text
@@ -695,6 +822,7 @@ if (SR) {
     for (let i = 0; i < event.results.length; i++) t += event.results[i][0].transcript;
     state.voiceTyped = true;
     els.reactText.value = (state.recBase ? state.recBase + ' ' : '') + t.trim();
+    autoGrowComposer();
     updateControls();
   };
   recognition.onend = () => { if (state.listening) endListening(); };
@@ -717,8 +845,8 @@ function toggleListening() {
   if (state.busyEval || !state.pending) return;
   state.recBase = els.reactText.value.trim();
   state.listening = true;
-  els.btnMic.classList.add('listening');
-  els.btnMic.innerHTML = '<span class="record-dot"></span>Stop mic';
+  els.btnMic.classList.add('listening'); // icon turns into icon + “Recording”
+  els.btnMic.title = 'Recording — click to stop';
   setStatus('Listening… speak your reaction (native speech-to-text)');
   try { recognition.start(); }
   catch { endListening(); setStatus('Mic is already busy — try again', 'error'); }
@@ -726,9 +854,24 @@ function toggleListening() {
 function endListening() {
   state.listening = false;
   els.btnMic.classList.remove('listening');
-  els.btnMic.innerHTML = '<span class="record-dot"></span>Mic';
+  els.btnMic.title = 'Native speech-to-text';
 }
 els.btnMic.addEventListener('click', toggleListening);
+
+// ============================================================
+// COMPOSER — auto-growing one-line input
+// ============================================================
+// Starts as a single-line field, grows as the text wraps, and scrolls
+// once it hits the CSS max-height.
+function autoGrowComposer() {
+  const ta = els.reactText;
+  const max = parseFloat(getComputedStyle(ta).maxHeight) || 140;
+  ta.style.height = 'auto';               // measure the natural content height
+  const h = ta.scrollHeight;
+  ta.style.height = h + 'px';             // CSS max-height clamps the grown box
+  ta.classList.toggle('grown', h > max + 1);
+}
+els.reactText.addEventListener('input', autoGrowComposer);
 
 // ============================================================
 // REACTION FLOW
@@ -792,6 +935,7 @@ els.btnSend.addEventListener('click', async () => {
   state.pending = null;
   state.voiceTyped = false;
   els.reactText.value = '';
+  autoGrowComposer();
   state.reactions.push(reaction);
   renderReaction(reaction);
   updateControls();
@@ -808,7 +952,8 @@ function updateControls() {
   els.btnMic.disabled = !canCompose || !recognition;
   els.btnSend.disabled = !canCompose || !els.reactText.value.trim();
 
-  els.exportSelect.disabled = state.reactions.length === 0;
+  els.btnExport.disabled = state.reactions.length === 0;
+  if (els.btnExport.disabled) closeExportMenu();
 
   if (state.pending) {
     els.reactHint.textContent = `Reacting at ¶ ${state.pending.markerP + 1} — everything up to it is the evaluated context.`;
@@ -1180,9 +1325,7 @@ function downloadBlob(blob, filename) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-els.exportSelect.addEventListener('change', () => {
-  const fmt = els.exportSelect.value;
-  els.exportSelect.value = ''; // reset so the same choice can be picked again
+function exportSession(fmt) {
   if (!fmt || !state.reactions.length) return;
   const base = `reaction-learner-${slug(state.sourceTitle)}-${Date.now()}`;
   if (fmt === 'json') {
@@ -1193,15 +1336,48 @@ els.exportSelect.addEventListener('change', () => {
   } else if (fmt === 'markdown') {
     downloadBlob(new Blob([buildMarkdown()], { type: 'text/markdown' }), base + '.md');
   }
+}
+
+// the export dropdown now lives in the Activity header (see #btn-export)
+function openExportMenu() {
+  if (els.btnExport.disabled) return;
+  els.exportMenu.classList.remove('hidden');
+  els.btnExport.setAttribute('aria-expanded', 'true');
+}
+function closeExportMenu() {
+  els.exportMenu.classList.add('hidden');
+  els.btnExport.setAttribute('aria-expanded', 'false');
+}
+els.btnExport.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (els.exportMenu.classList.contains('hidden')) openExportMenu(); else closeExportMenu();
+});
+els.exportMenu.addEventListener('click', (e) => {
+  const item = e.target.closest('.menu-item');
+  if (!item) return;
+  closeExportMenu();
+  exportSession(item.dataset.format);
+});
+document.addEventListener('click', (e) => {
+  if (!els.exportMenu.classList.contains('hidden') && !e.target.closest('.menu-wrap')) closeExportMenu();
 });
 
 // ============================================================
 // init
 // ============================================================
-renderTheme();
-renderProviderCards();
-initReactionsPanel();
-consumePendingGrab();
-loadSavedKeys();
-updateControls();
-updateForgetBtn();
+async function init() {
+  await loadPrefs();        // saved keys + provider + models + theme
+  state.provider = prefs.provider;
+  syncThemePref();          // paint the saved appearance
+  renderProviderCards();    // model <option>s use the saved per-provider picks
+  draftFromPrefs();
+  applyDraftToInputs();     // the modal opens on exactly what is stored
+  initReactionsPanel();
+  consumePendingGrab();
+  updateControls();
+  autoGrowComposer();
+  if (Object.keys(prefs.keys).length) {
+    setStatus('Saved API keys restored — open Settings to review or erase them', 'success');
+  }
+}
+init();

@@ -17,7 +17,7 @@
       <div class="pane-head">
         <span class="brand">Reaction Learner</span>
         <div class="spacer"></div>
-        <button id="btn-settings" class="btn compact" title="Settings"><span class="ic ic-gear" aria-hidden="true"></span>Settings</button>
+        <button id="btn-settings" class="btn icon-btn" title="Settings" aria-label="Settings"><span class="ic ic-gear" aria-hidden="true"></span></button>
       </div>
       <div class="reader-toolbar">
         <button id="btn-source" class="btn" title="Paste text to study"><span class="ic ic-file-add" aria-hidden="true"></span>Add Text</button>
@@ -56,23 +56,26 @@
       <div class="reactions-head">
         <span class="head-title">Reactions</span>
         <div class="spacer"></div>
-        <button id="btn-close-reactions" class="btn compact" title="Close reactions">✕</button>
+        <div class="head-actions">
+          <div class="menu-wrap">
+            <button id="btn-export" class="btn icon-btn" title="Export this session" aria-label="Export this session" aria-haspopup="true" aria-expanded="false" disabled><span class="ic ic-download" aria-hidden="true"></span></button>
+            <div id="export-menu" class="menu hidden" role="menu">
+              <button class="menu-item" data-format="json" role="menuitem">JSON</button>
+              <button class="menu-item" data-format="markdown" role="menuitem">Markdown</button>
+            </div>
+          </div>
+          <button id="btn-close-reactions" class="btn icon-btn" title="Close reactions" aria-label="Close reactions">✕</button>
+        </div>
       </div>
       <div id="reactions" class="reactions">
         <div class="empty-state">Click a paragraph to set your spot, press <b>React here</b>, and your reactions + AI evaluations will appear here.</div>
       </div>
       <div class="composer">
         <div id="react-hint" class="dim">Click a paragraph, then press <b>React here</b>.</div>
-        <textarea id="react-text" rows="2" placeholder="Type your reaction here or click the mic and just say it…" disabled></textarea>
-        <div class="composer-btns">
-          <button id="btn-mic" class="btn" disabled title="Native speech-to-text"><span class="record-dot"></span>Mic</button>
-          <select id="export-select" class="export-select" disabled title="Export this session">
-            <option value="" selected disabled>Export</option>
-            <option value="json">JSON</option>
-            <option value="markdown">Markdown</option>
-          </select>
-          <div class="spacer"></div>
-          <button id="btn-send" class="btn primary" disabled>Send</button>
+        <div class="composer-row">
+          <textarea id="react-text" rows="1" placeholder="Type your reaction here or click the mic and just say it…" disabled></textarea>
+          <button id="btn-mic" class="btn icon-btn" disabled title="Native speech-to-text" aria-label="Record your reaction"><span class="ic ic-mic" aria-hidden="true"></span><span class="rec-label">Recording</span></button>
+          <button id="btn-send" class="btn primary icon-btn" title="Send" aria-label="Send reaction" disabled><span class="ic ic-send" aria-hidden="true"></span></button>
         </div>
       </div>
     </section>
@@ -106,7 +109,10 @@
   <div class="modal">
     <div class="modal-head">
       <h3>Settings</h3>
-      <button class="btn compact" data-close="settings-modal" title="Close">✕</button>
+      <div class="head-actions">
+        <button id="btn-save-settings" class="btn primary" title="Save keys and preferences">Save</button>
+        <button id="btn-close-settings" class="btn icon-btn" title="Close without saving" aria-label="Close">✕</button>
+      </div>
     </div>
     <div class="modal-body">
       <div class="appearance-row">
@@ -119,7 +125,7 @@
       </div>
 
       <h4 class="modal-label">AI evaluation provider</h4>
-      <p class="hint">Pick a provider and type its API key. Keys are kept in this extension’s private browser storage (nothing else can read them) and are sent only to that provider when you evaluate. “Forget saved keys” erases them from the browser completely.</p>
+      <p class="hint">Pick a provider and type its API key, then choose its model. Nothing is stored until you press <b>Save</b> — saving keeps the keys, the provider, the models and your light/dark choice in this extension’s private browser storage (nothing else can read them). Keys are sent only to their provider when you evaluate. “Forget saved keys” erases them from the browser completely.</p>
 
       <div id="provider-list"></div>
 
