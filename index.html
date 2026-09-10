@@ -17,11 +17,11 @@
       <div class="pane-head">
         <span class="brand">Reaction Learner</span>
         <div class="spacer"></div>
+        <button id="btn-source" class="btn icon-btn" title="Paste text to study" aria-label="Add text"><span class="ic ic-plus" aria-hidden="true"></span></button>
         <button id="btn-settings" class="btn icon-btn" title="Settings" aria-label="Settings"><span class="ic ic-gear" aria-hidden="true"></span></button>
       </div>
-      <div class="reader-toolbar">
-        <button id="btn-source" class="btn" title="Paste text to study"><span class="ic ic-file-add" aria-hidden="true"></span>Add Text</button>
-        <span class="vsep"></span>
+      <!-- position readout — stays hidden until a paragraph has been marked as read -->
+      <div id="reader-toolbar" class="reader-toolbar hidden">
         <span id="read-pos" class="dim"></span>
       </div>
       <div class="speech-bar">
@@ -41,7 +41,7 @@
       </div>
       <div id="reading" class="reading">
         <div class="empty-state">
-          No text loaded. Press <b>Add Text</b> to paste text,<br>
+          No text loaded. Press <b>+</b> in the top bar to paste text,<br>
           or click the extension’s <b>toolbar icon while on a webpage</b> to load that page’s text.
         </div>
       </div>

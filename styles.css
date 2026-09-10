@@ -59,7 +59,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 
 /* ---------- pane header (reader pane’s own top row — no full-width nav bar) ---------- */
 .pane-head {
-  flex: 0 0 auto; display: flex; align-items: center; gap: 12px;
+  flex: 0 0 auto; display: flex; align-items: center; gap: 10px;
   height: 48px; padding: 0 16px; box-sizing: border-box;
   background: var(--panel); border-bottom: 1px solid var(--border);
 }
@@ -105,6 +105,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .ic-gear     { --icon: url('icons/gear.svg'); }
 .ic-msg      { --icon: url('icons/message.svg'); }
 .ic-file-add { --icon: url('icons/file-add.svg'); }
+.ic-plus     { --icon: url('icons/plus.svg'); }
 .ic-pen      { --icon: url('icons/pen.svg'); }
 .ic-sun      { --icon: url('icons/sun.svg'); }
 .ic-moon     { --icon: url('icons/moon.svg'); }
@@ -156,9 +157,11 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--a
   display: flex; flex-direction: column; min-width: 0; min-height: 0;
   background: var(--bg);
 }
+/* the reading position readout — no controls live in here any more, so it is a
+   thin strip, and it only appears once a paragraph has been marked as read */
 .reader-toolbar {
   flex: 0 0 auto; display: flex; align-items: center; gap: 10px;
-  padding: 7px 16px; border-bottom: 1px solid var(--border); background: var(--bg);
+  padding: 3px 16px; border-bottom: 1px solid var(--border); background: var(--bg);
 }
 #read-pos { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .speech-bar {

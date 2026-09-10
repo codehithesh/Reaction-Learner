@@ -82,7 +82,7 @@ async function consumePendingGrab() {
         loadSource(pendingGrab.text, pendingGrab.title || '', pendingGrab.url || '');
         setStatus('Loaded text from the page you opened this from', 'success');
       } else {
-        setStatus('Nothing readable was found on that page — use “Add Text” to paste instead.', 'error');
+        setStatus('Nothing readable was found on that page — use the + button to paste instead.', 'error');
       }
     } else if (pendingGrab) {
       chrome.storage.session.remove('pendingGrab'); // stale token

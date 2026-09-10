@@ -27,11 +27,11 @@ function renderReadingState() {
 }
 
 function updateReadPos() {
-  if (!state.paras.length) { els.readPos.textContent = 'No text loaded'; return; }
-  if (state.markerP < 0) {
-    els.readPos.textContent = `0 / ${state.paras.length} paragraphs — click a paragraph to set your spot`;
-    return;
-  }
+  // The bar exists only to report where you are, so it stays out of the way until
+  // a paragraph has actually been marked as read.
+  const marked = state.paras.length > 0 && state.markerP >= 0;
+  els.readerToolbar.classList.toggle('hidden', !marked);
+  if (!marked) return;
   const chars = state.prefixLen[state.markerP] || 0;
   const pct = state.totalChars ? chars / state.totalChars : 0;
   els.readPos.textContent =

@@ -15,7 +15,7 @@ function cacheEls() {
     btnSettings: $('btn-settings'), btnSaveSettings: $('btn-save-settings'), btnCloseSettings: $('btn-close-settings'),
     exportMenu: $('export-menu'), btnExport: $('btn-export'),
     btnSource: $('btn-source'),
-    readPos: $('read-pos'), btnReact: $('btn-react'),
+    readerToolbar: $('reader-toolbar'), readPos: $('read-pos'), btnReact: $('btn-react'),
     voiceSelect: $('voice-select'), rateSelect: $('rate-select'),
     btnRead: $('btn-read'), btnPause: $('btn-pause'), btnStop: $('btn-stop'),
     reading: $('reading'),

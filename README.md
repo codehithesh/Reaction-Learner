@@ -14,7 +14,7 @@ JSON/Markdown export happens in-browser.
 
 | Area | How it works |
 | --- | --- |
-| Source | Paste any text, **or** click the toolbar icon while on a webpage to load that page's readable text |
+| Source | Paste any text with the **+** button in the top bar, **or** click the toolbar icon while on a webpage to load that page's readable text |
 | Position marker (T) | Click the paragraph you've read up to; the text before it becomes the evaluation context |
 | Reaction sheet | The floating **React** button opens the reactions sheet **full screen** — identical on desktop and mobile — so the source text is covered and you write from memory, with the caret already in the composer. **✕** (or `Esc`) lifts it |
 | Reaction | Type it in the auto-growing composer, or speak it — **native** `webkitSpeechRecognition`, no speech API, nothing uploaded |
@@ -89,11 +89,11 @@ does the wiring.
 2. Enable **Developer mode** (top-right)
 3. **Load unpacked** → select this folder
 4. Click the Reaction Learner toolbar icon on any webpage, or open
-   `index.html` inside the extension and press **✎ Add Text** to paste text
+   `index.html` inside the extension and press the **+** button to paste text
 
 ## How to use
 
-1. **Load text** — press **✎ Add Text** and paste it, or click the extension's
+1. **Load text** — press the **+** button in the top bar and paste it, or click the extension's
    toolbar icon on a webpage to load its readable text automatically.
 2. **Read** — optionally hit **▶ Read** in the reader bar for native read-aloud
    (pick an OS voice). The marker advances as it reads.
