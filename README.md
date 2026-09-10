@@ -3,6 +3,9 @@
 Read any text, mark where you are, then react — in writing or by just speaking —
 and get an AI evaluation of your understanding versus the source text.
 
+![alt text](https://github.com/codehithesh/Reaction-Learner/blob/main/assets/s1.png)
+![alt text](https://github.com/codehithesh/Reaction-Learner/blob/main/assets/s2.png)
+
 **No accounts, no servers, no session persistence.** Source text, reactions and
 evaluations live only in the memory of the running page — close the tab and
 they're gone. The only thing that persists is what you explicitly **Save** in
