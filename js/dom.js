@@ -26,7 +26,7 @@ function cacheEls() {
     btnCloseReactions: $('btn-close-reactions'),
     // modals
     sourceModal: $('source-modal'), settingsModal: $('settings-modal'),
-    // source modal: the two tabs and the single Load text button they share
+    // source modal — markup in js/source-view.js, behaviour in js/source.js
     sourceTabs: $('source-tabs'), tabPaste: $('tab-paste'), tabUrl: $('tab-url'),
     panePaste: $('pane-paste'), paneUrl: $('pane-url'),
     pasteText: $('paste-text'), urlInput: $('url-input'), urlHint: $('url-hint'),

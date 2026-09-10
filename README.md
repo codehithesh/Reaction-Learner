@@ -49,6 +49,7 @@ icons/              UI glyphs (16/48/128 app icons + masked SVG icons)
 js/view.js          mounts a pane's markup into its placeholder
 js/settings-view.js   Settings pane markup  (own file)
 js/reactions-view.js  Reactions pane markup (own file)
+js/source-view.js     Add source text modal markup — the paste and URL tabs
 
 js/state.js         all session state + runtime constants
 js/utils.js         pure helpers (formatting, slug, escaping, key sanitizing)
@@ -62,7 +63,8 @@ js/store.js         reading/writing saved preferences
 js/settings.js      Settings behaviour: draft, Save, Forget keys
 js/marker.js        the position marker and paragraph highlighting
 js/composer.js      the auto-growing composer + which controls are enabled
-js/reader.js        source text: paste, load from URL, segment, render, grabbed page text
+js/reader.js        the reading pane: segment the source, render it, mark a paragraph
+js/source.js        how text arrives: the modal's tabs, the URL load, the toolbar grab
 js/evaluation.js    the scoring rubric, prompt and result rendering
 js/export.js        JSON / Markdown export
 js/reactions.js     the reactions sheet and the send-and-evaluate flow

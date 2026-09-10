@@ -28,6 +28,7 @@ async function init() {
   initTTS();
   initSTT();
   wireReader();
+  wireSource();
   wireComposer();
   wireReactions();
   wireExport();
