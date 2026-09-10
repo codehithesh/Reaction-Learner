@@ -20,15 +20,11 @@ function autoGrowComposer() {
 }
 
 function updateControls() {
-  const hasSource = state.paras.length > 0;
-  const canReact = hasSource && state.markerP >= 0 && !state.busyEval;
-  els.btnReact.disabled = !canReact;
-
-  const canCompose = !!state.pending && !state.busyEval && hasSource;
-  els.reactText.disabled = !canCompose;
-  els.btnMic.disabled = !canCompose || !state.sttSupported;
-  els.btnSend.disabled = !canCompose || !els.reactText.value.trim();
-
+  // Nothing here is disabled on purpose. The sheet can only be reached by
+  // pressing React, so what the user wants is never in doubt — every action
+  // explains what is missing with a toast instead of greying out. Two things
+  // still carry state: Export (there must be something to export), and the mic
+  // when this browser has no speech recognition at all, set once by initSTT().
   els.btnExport.disabled = state.reactions.length === 0;
   if (els.btnExport.disabled) closeExportMenu();
   if (state.pending) {
@@ -36,7 +32,7 @@ function updateControls() {
   } else if (state.busyEval) {
     els.reactHint.textContent = 'Evaluating your reaction…';
   } else {
-    els.reactHint.textContent = 'Click a paragraph to set your spot, then press "React here" to write from memory.';
+    els.reactHint.textContent = 'Click a paragraph to set your spot, then press "React" to write from memory.';
   }
 }
 

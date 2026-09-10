@@ -23,8 +23,6 @@
         <button id="btn-source" class="btn" title="Paste text to study"><span class="ic ic-file-add" aria-hidden="true"></span>Add Text</button>
         <span class="vsep"></span>
         <span id="read-pos" class="dim"></span>
-        <div class="spacer"></div>
-        <button id="btn-react" class="btn primary" disabled><span class="ic ic-pen" aria-hidden="true"></span>React here</button>
       </div>
       <div class="speech-bar">
         <span class="mini-label">Read aloud</span>
@@ -47,7 +45,10 @@
           or click the extension’s <b>toolbar icon while on a webpage</b> to load that page’s text.
         </div>
       </div>
-      <button id="btn-reactions" class="reactions-fab" title="Open the reactions panel"><span class="ic ic-msg" aria-hidden="true"></span>Reactions</button>
+      <!-- the single way into the reactions sheet: arms a reaction at the marker,
+           opens the sheet and puts the caret in the composer. Never disabled —
+           it explains what is missing with a toast instead. -->
+      <button id="btn-react" class="reactions-fab" title="React to the text at your spot"><span class="ic ic-msg" aria-hidden="true"></span>React</button>
     </section>
 
     <!-- The reactions sheet is mounted here. Its markup lives in

@@ -47,12 +47,11 @@ function stopListening() {
 // ---------- wiring ----------
 function initSTT() {
   if (!SR) {
-    state.sttSupported = false;
+    // The one control that stays disabled, because it genuinely cannot work here.
     els.btnMic.disabled = true;
     els.btnMic.title = 'Speech recognition is not supported in this browser';
     return;
   }
-  state.sttSupported = true;
   recognition = new SR();
   recognition.lang = (navigator.language || 'en-US').replace('_', '-');
   recognition.interimResults = true;

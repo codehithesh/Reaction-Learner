@@ -22,7 +22,7 @@ function cacheEls() {
     reactions: $('reactions'), reactHint: $('react-hint'),
     reactText: $('react-text'), btnMic: $('btn-mic'), btnSend: $('btn-send'),
     // full-screen reactions sheet
-    reactionsCol: $('reactions-col'), btnReactions: $('btn-reactions'),
+    reactionsCol: $('reactions-col'),
     btnCloseReactions: $('btn-close-reactions'),
     // modals
     sourceModal: $('source-modal'), settingsModal: $('settings-modal'),

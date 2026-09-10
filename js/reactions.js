@@ -2,8 +2,9 @@
 // REACTION FLOW — the sheet, the composer, sending for evaluation
 // ============================================================
 // One full-screen sheet, the same on desktop and mobile: it covers the reading
-// pane so you write from memory. “React here” opens it armed for a new reaction;
-// the corner pill reopens it read-only. The markup lives in js/reactions-view.js.
+// pane so you write from memory. The floating “React” button is the single way
+// in: it arms a reaction at the marker, opens the sheet and focuses the composer.
+// The markup lives in js/reactions-view.js.
 
 'use strict';
 
@@ -11,7 +12,7 @@ function setReactionsOpen(open) {
   state.reactionsOpen = open;
   document.body.classList.toggle('reactions-closed', !open);
   els.reactionsCol.classList.toggle('open', open);
-  els.btnReactions.classList.toggle('hidden', open); // pill shows only while the sheet is hidden
+  els.btnReact.classList.toggle('hidden', open); // the pill shows only while the sheet is hidden
   if (open) {
     scrollBottom(els.reactions);
   } else {
@@ -67,17 +68,8 @@ function renderReaction(reaction) {
 
 // ---------- wiring ----------
 function wireReactions() {
-  els.btnReactions.addEventListener('click', () => {
-    // the pill is a read-only look at past reactions — it never arms a new one,
-    // so a half-written reaction can’t linger behind the sheet
-    if (state.reactionsOpen) { closeReactions(); return; }
-    if (state.pending) {
-      state.pending = null;
-      setStatus('Press “React here” to write a reaction from memory');
-    }
-    openReactions();
-    updateControls();
-  });
+  // The floating “React” button is the one way in, and it is never disabled:
+  // when there is nothing to react to yet it says what is missing and stays put.
   els.btnCloseReactions.addEventListener('click', closeReactions);
 
   els.btnReact.addEventListener('click', () => {
@@ -99,7 +91,7 @@ function wireReactions() {
   });
 
   els.btnSend.addEventListener('click', async () => {
-    if (!state.pending) return;
+    if (!state.pending) { setStatus('Press React to write a reaction', 'error'); return; }
     const text = els.reactText.value.trim();
     if (!text) { setStatus('Write or speak a reaction first', 'error'); return; }
     if (state.busyEval) { setStatus('Wait for the current evaluation to finish', 'error'); return; }
@@ -143,6 +135,9 @@ function wireReactions() {
     autoGrowComposer();
     state.reactions.push(reaction);
     renderReaction(reaction);
+    // The sheet is still open and the text still covered, so stay armed at the
+    // same spot: a second reaction can be written without pressing React again.
+    state.pending = { markerP };
     updateControls();
     await runEvaluation(reaction, prov);
   });

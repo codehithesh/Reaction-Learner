@@ -37,7 +37,7 @@ async function init() {
   await initSettings();
 
   // 4 · open on the reading pane
-  setReactionsOpen(false);  // the sheet stays out of the way until “React here”
+  setReactionsOpen(false);  // the sheet stays out of the way until React
   consumePendingGrab();
   updateControls();
   autoGrowComposer();

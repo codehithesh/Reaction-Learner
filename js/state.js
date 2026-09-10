@@ -28,6 +28,5 @@ const state = {
   voiceTyped: false,  // reaction text came from the mic
   listening: false,
   recBase: '',
-  sttSupported: false, // set once the native speech-recognition API has been probed
   tts: { active: false, paused: false, idx: -1, utter: null },
 };
