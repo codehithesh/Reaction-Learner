@@ -3,15 +3,16 @@
 Read any text, mark where you are, then react — in writing or by just speaking —
 and get an AI evaluation of your understanding versus the source text.
 
-![alt text](https://github.com/codehithesh/Reaction-Learner/blob/main/assets/s1.png)
-![alt text](https://github.com/codehithesh/Reaction-Learner/blob/main/assets/s2.png)
+![The reading pane with a source text loaded and a paragraph marked](https://github.com/codehithesh/Reaction-Learner/blob/main/assets/s1.png)
+![The reactions sheet showing a written reaction and its AI evaluation](https://github.com/codehithesh/Reaction-Learner/blob/main/assets/s2.png)
 
-**No accounts, no servers, no session persistence.** Source text, reactions and
-evaluations live only in the memory of the running page — close the tab and
-they're gone. The only thing that persists is what you explicitly **Save** in
-Settings: your BYOK API keys plus your provider, model and light/dark
-preferences (extension-private browser storage; keys erased on request).
-JSON/Markdown export happens in-browser.
+**No accounts, no backend of ours, no session persistence.** The whole project
+runs in your browser. Source text, reactions and evaluations live only in the
+memory of the running page — close the tab and they're gone. The only thing that
+persists is what you explicitly **Save** in Settings: your BYOK API keys plus your
+provider, model and light/dark preferences (extension-private browser storage;
+keys erased on request). JSON/Markdown export happens in-browser. Voice input is
+the one thing that leaves your machine — see [Privacy](#privacy).
 
 ## Features
 
@@ -20,8 +21,8 @@ JSON/Markdown export happens in-browser.
 | Source | Paste any text with the **+** button in the top bar, **or** click the toolbar icon while on a webpage to load that page's readable text |
 | Position marker (T) | Click the paragraph you've read up to; the text before it becomes the evaluation context |
 | Reaction sheet | The floating **React** button opens the reactions sheet **full screen** — identical on desktop and mobile — so the source text is covered and you write from memory, with the caret already in the composer. **✕** (or `Esc`) lifts it |
-| Reaction | Type it in the auto-growing composer, or speak it — **native** `webkitSpeechRecognition`, no speech API, nothing uploaded |
-| Read aloud | **Native** `speechSynthesis` with OS voices, highlight + auto-advancing marker, pause/stop to react |
+| Reaction | Type it in the auto-growing composer, or speak it — the browser's own `SpeechRecognition`, so no speech API and no extra key to get. Be aware that Chrome transcribes that audio on Google's servers: [Privacy](#privacy) |
+| Read aloud | **Native** `speechSynthesis` with OS voices, highlight + auto-advancing marker, pause/stop to react. Fully local — nothing leaves the machine |
 | Evaluation | BYOK across **OpenAI** (`o3-mini` / `o4-mini` / `gpt-4o`), **Claude** (`claude-sonnet-5` / `claude-opus-5` / `claude-haiku-4-5` / `claude-fable-5-1`), **Google Gemini** (`gemini-3.8-flash` / `gemini-3.1-pro` / …), **DeepSeek** (`deepseek-reasoner` / `deepseek-chat`), **Kimi** (`kimi-k3` / `kimi-k2.6`) and **Mistral**; unsupported models/params fall back automatically |
 | Scoring | Accuracy · Understanding · Coverage · Unsupported inference · Incorrect claims · Missed points · Overall — plus a **suggested better summary** |
 | Export | **Export** dropdown in the reactions sheet header → JSON + Markdown downloaded directly from the browser |
@@ -46,8 +47,8 @@ js/dom.js           element cache, modals, toast
 js/theme.js         System / Light / Dark appearance
 js/providers.js     the six BYOK providers + their key/model inputs
 js/api.js           the API call functions — the only network layer
-js/tts.js           text-to-speech (native, no API)
-js/stt.js           speech-to-text (native, no API)
+js/tts.js           text-to-speech (OS voices, fully local)
+js/stt.js           speech-to-text (browser SpeechRecognition — server-side in Chrome)
 js/store.js         reading/writing saved preferences
 js/settings.js      Settings behaviour: draft, Save, Forget keys
 js/marker.js        the position marker and paragraph highlighting
@@ -115,7 +116,9 @@ does the wiring.
    mid-sentence is often enough — so a new session is opened underneath the same
    recording and the transcript is stitched across the seam. Only the mic button,
    closing the sheet, sending, or a blocked microphone stops it. A pause is not a
-   failure and never ends a recording.
+   failure and never ends a recording. Note that dictation is the one feature here
+   that sends data out: in Chrome the audio is transcribed by Google, so if you'd
+   rather it didn't, type the reaction instead — see [Privacy](#privacy).
 5. **Evaluate** — open **⚙ Settings** (top bar, icon only), pick a provider card
    (OpenAI, Claude, Gemini, DeepSeek, Kimi, Mistral), paste its key, choose a
    model, then press **Save** and hit **Send**. Scores + suggested summary appear
@@ -140,12 +143,24 @@ provider, model and appearance preferences alone.
 ## Privacy
 
 - Source text, reactions, and evaluations exist **only in page memory**.
-- Speech-to-text and text-to-speech are **native browser features** — audio and
-  speech never leave your machine.
-- The only network calls go from your chosen key to that provider's API
-  endpoint (e.g. `api.openai.com`, `api.anthropic.com`,
-  `generativelanguage.googleapis.com`, `api.deepseek.com`, `api.moonshot.ai`,
-  `api.mistral.ai`) when you run an evaluation.
+- **Read aloud is fully local.** `speechSynthesis` speaks through the voices
+  already installed in your operating system. No text and no audio leaves the
+  machine, and it works offline.
+- **Voice input is not local, and this is worth knowing before you press the mic.**
+  It uses the browser's own `SpeechRecognition` — no account, no API key, nothing
+  stored by this app — but Chrome's implementation is a *server-side* recogniser:
+  your microphone audio is streamed to Google to be transcribed, and dictation
+  simply does not work without a network connection (Chrome reports that as the
+  `network` error). That is the browser's behaviour rather than a choice this
+  project makes, and other browsers implement the same API differently. If that
+  trade-off is not acceptable to you, type the reaction instead: everything else
+  in this app stays on your machine.
+- This app makes exactly two kinds of network request, and only when you ask for
+  them: the microphone audio Chrome sends to Google while you dictate, and the
+  request from your own API key to that provider's endpoint (e.g.
+  `api.openai.com`, `api.anthropic.com`, `generativelanguage.googleapis.com`,
+  `api.deepseek.com`, `api.moonshot.ai`, `api.mistral.ai`) when you run an
+  evaluation. There is no analytics, no telemetry and no update check.
 - API keys are read on demand from the Settings inputs and only ever sent to the
   provider you picked. They are written to storage **only when you press Save**.
   Once saved they live in this extension's private `chrome.storage.local` —
@@ -164,4 +179,9 @@ provider, model and appearance preferences alone.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+Licensed under the **Apache License, Version 2.0** — see [LICENSE](LICENSE).
+
+You may use, modify, redistribute and sell this project, including
+commercially, under the terms of that licence. In return it asks for attribution
+and includes an express grant of patent rights from contributors. It is provided
+**without warranty of any kind**, express or implied.

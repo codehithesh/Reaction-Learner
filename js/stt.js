@@ -1,8 +1,15 @@
 // ============================================================
 // SPEECH-TO-TEXT — voice reactions (native, no API)
 // ============================================================
-// Built on the browser's own SpeechRecognition: the transcript is produced
-// locally by the platform, so there is no speech service and no upload.
+// Built on the browser's own SpeechRecognition: no speech API to pay for, no key
+// to configure, nothing hosted by this project. Be precise about what that does
+// and does not mean, because it is easy to oversell — in Chrome this is a
+// SERVER-SIDE recogniser, so the microphone audio is streamed to Google to be
+// transcribed and dictation does not work offline (hence the 'network' error
+// handled below). That is the browser's behaviour, not a decision this app makes,
+// but it is the one place where this app's data leaves the machine. Read-aloud
+// (js/tts.js) really is fully local. See the README's Privacy section.
+//
 // The transcript is written straight into the reaction composer (js/composer.js);
 // this file owns only the microphone and the recording state.
 //
