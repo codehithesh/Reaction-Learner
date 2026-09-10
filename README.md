@@ -7,7 +7,7 @@
 <h1 align="center">Reaction Learner</h1>
 
 <h3 align="center">
-  Read any text, mark where you are, then react — in writing or by just speaking — and get an AI evaluation of your understanding versus the source text.
+  Read any text, mark where you are, then react — in writing or by just speaking — and get an AI evaluation of your understanding versus the source text. (Chrome Extension)
 </h3>
 
 <br/>
