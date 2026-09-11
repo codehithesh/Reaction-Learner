@@ -27,6 +27,8 @@ const SETTINGS_VIEW_HTML = `
         </div>
       </div>
 
+      <hr class="modal-divider">
+
       <h4 class="modal-label">AI evaluation provider</h4>
       <p class="hint">Pick a provider and type its API key, then choose its model. Nothing is stored until you press <b>Save</b> — saving keeps the keys, the provider, the models and your light/dark choice in this extension’s private browser storage (nothing else can read them). Keys are sent only to their provider when you evaluate. “Forget saved keys” erases them from the browser completely.</p>
 

@@ -397,6 +397,14 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--a
   margin-left: auto;
 }
 .appearance-row .seg-btn { font-size: 12px; padding: 0 4px; white-space: nowrap; }
+/* rule between the settings modal's sections; the body's own 10px column gap
+   supplies the spacing on either side, so this only pulls the two apart a little
+   and cancels the default <hr> margins */
+.modal-divider {
+  flex: none; width: 100%; height: 0;
+  border: 0; border-top: 1px solid var(--border);
+  margin: 6px 0 0;
+}
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
 
 /* source modal: the two tab panels. A pane repeats the modal body's own column
