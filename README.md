@@ -32,7 +32,7 @@ the one thing that leaves your machine — see [Privacy](#privacy).
 | Reaction sheet | The floating **React** button opens the reactions sheet **full screen** — identical on desktop and mobile — so the source text is covered and you write from memory, with the caret already in the composer. **✕** (or `Esc`) lifts it |
 | Reaction | Type it in the auto-growing composer, or speak it — the browser's own `SpeechRecognition`, so no speech API and no extra key to get. Be aware that Chrome transcribes that audio on Google's servers: [Privacy](#privacy) |
 | Read aloud | **Native** `speechSynthesis` with OS voices, highlight + auto-advancing marker, pause/stop to react. Fully local — nothing leaves the machine |
-| Evaluation | BYOK across **OpenAI** (`o3-mini` / `o4-mini` / `gpt-4o`), **Claude** (`claude-sonnet-5` / `claude-opus-5` / `claude-haiku-4-5` / `claude-fable-5-1`), **Google Gemini** (`gemini-3.8-flash` / `gemini-3.1-pro` / …), **DeepSeek** (`deepseek-reasoner` / `deepseek-chat`), **Kimi** (`kimi-k3` / `kimi-k2.6`) and **Mistral**; unsupported models/params fall back automatically |
+| Evaluation | BYOK across **OpenAI** (Chat Completions), **Anthropic** (Messages API), **Google Gemini**, **DeepSeek**, **Moonshot (Kimi)**, **Grok** (xAI), **Qwen** (Alibaba Model Studio, Singapore), **Z.ai** (Zhipu GLM) and **Muse Spark** (Meta Model API) — all OpenAI-compatible except Anthropic; unsupported models/params fall back automatically |
 | Scoring | Accuracy · Understanding · Coverage · Unsupported inference · Incorrect claims · Missed points · Overall — plus a **suggested better summary** |
 | Export | **Export** dropdown in the reactions sheet header → JSON + Markdown downloaded directly from the browser |
 | Storage | Session data: none — page memory only. Settings are written only when you press **Save** — into `chrome.storage.local` in the extension, or `localStorage` in a plain browser tab — and survive reloads and restarts in both. “Forget saved keys” erases the keys alone |
@@ -55,7 +55,7 @@ js/state.js         all session state + runtime constants
 js/utils.js         pure helpers (formatting, slug, escaping, key sanitizing)
 js/dom.js           element cache, modals, toast
 js/theme.js         System / Light / Dark appearance
-js/providers.js     the six BYOK providers + their key/model inputs
+js/providers.js     the nine BYOK providers + their key/model inputs
 js/api.js           the API call functions — the only network layer
 js/tts.js           text-to-speech (OS voices, fully local)
 js/stt.js           speech-to-text (browser SpeechRecognition — server-side in Chrome)
@@ -132,7 +132,8 @@ does the wiring.
    that sends data out: in Chrome the audio is transcribed by Google, so if you'd
    rather it didn't, type the reaction instead — see [Privacy](#privacy).
 5. **Evaluate** — open **⚙ Settings** (top bar, icon only), pick a provider card
-   (OpenAI, Claude, Gemini, DeepSeek, Kimi, Mistral), paste its key, choose a
+   (OpenAI, Anthropic, Google Gemini, DeepSeek, Moonshot (Kimi), Grok, Qwen,
+   Z.ai, Muse Spark), paste its key, choose a
    model, then press **Save** and hit **Send**. Scores + suggested summary appear
    in the reactions sheet.
 6. **Export** — the **Export** dropdown in the sheet header writes JSON/Markdown
@@ -196,7 +197,8 @@ the Chrome Web Store listing. In short:
   them: the microphone audio Chrome sends to Google while you dictate, and the
   request from your own API key to that provider's endpoint (e.g.
   `api.openai.com`, `api.anthropic.com`, `generativelanguage.googleapis.com`,
-  `api.deepseek.com`, `api.moonshot.ai`, `api.mistral.ai`) when you run an
+  `api.deepseek.com`, `api.moonshot.ai`, `api.x.ai`,
+  `dashscope-intl.aliyuncs.com`, `api.z.ai`, `api.meta.ai`) when you run an
   evaluation. There is no analytics, no telemetry and no update check.
 - API keys are read on demand from the Settings inputs and only ever sent to the
   provider you picked. They are written to storage **only when you press Save**,

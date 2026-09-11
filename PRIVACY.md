@@ -25,7 +25,8 @@ anywhere.
 ### API keys
 
 Reaction Learner is "bring your own key": you paste an API key for an AI provider
-(OpenAI, Anthropic, Google, DeepSeek, Moonshot or Mistral). A key is:
+(OpenAI, Anthropic, Google, DeepSeek, Moonshot, xAI, Alibaba Cloud, Z.ai or
+Meta). A key is:
 
 - **read** from the Settings field when you run an evaluation;
 - **stored** only when you press Save, so you enter a key once instead of on every
@@ -109,8 +110,11 @@ are: [OpenAI](https://openai.com/policies/privacy-policy),
 [Anthropic](https://www.anthropic.com/legal/privacy),
 [Google](https://policies.google.com/privacy),
 [DeepSeek](https://cdn.deepseek.com/policies/en-US/deepseek-privacy-policy.html),
-[Moonshot AI](https://platform.moonshot.ai/docs/agreement/privacy) and
-[Mistral AI](https://mistral.ai/terms#privacy-policy).
+[Moonshot AI](https://platform.moonshot.ai/docs/agreement/privacy),
+[xAI](https://x.ai/legal/privacy-policy),
+[Alibaba Cloud](https://www.alibabacloud.com/help/en/legal/latest/alibaba-cloud-international-website-privacy-policy),
+[Z.ai](https://z.ai/legal-agreement/privacy-policy) and
+[Meta](https://www.facebook.com/privacy/policy/).
 
 ## Retention and deletion
 
@@ -137,7 +141,7 @@ That is the reason the extension exists as the more private option.
 | `activeTab` | Read the current page's text, only after you click the toolbar icon |
 | `scripting` | Extract that page's readable text at the moment you click, and read a page you loaded through **Enter URL** |
 | `storage` | Save your API keys, chosen provider, model and appearance, locally |
-| Host access to the six AI provider endpoints | Send your evaluation request to the provider you selected |
+| Host access to the nine AI provider endpoints | Send your evaluation request to the provider you selected |
 | **Optional** host access to sites | Only if you use **Enter URL**, and only for the sites you approve in Chrome's prompt |
 
 The one permission that could grant access to websites is declared **optional**.
