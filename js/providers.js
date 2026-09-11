@@ -61,13 +61,12 @@ const PROVIDERS = [
     id: 'deepseek', label: 'DeepSeek',
     endpoint: 'https://api.deepseek.com/chat/completions',
     style: 'chat', json: true, temp: true,
-    fallback: 'deepseek-chat',
-    noTemp: (m) => m === 'deepseek-reasoner',
-    hint: 'Chat Completions. Both current models support response_format; the reasoner takes no temperature.',
+    fallback: 'deepseek-flash',
+    hint: 'Chat Completions. Both current models support response_format.',
     ph: 'sk-...',
     models: [
-      { v: 'deepseek-reasoner', l: 'deepseek-reasoner (R1)' },
-      { v: 'deepseek-chat', l: 'deepseek-chat (V3)' },
+      { v: 'deepseek-flash', l: 'DeepSeek Flash (fast)' },
+      { v: 'deepseek-v4-pro', l: 'DeepSeek V4 Pro' },
     ],
   },
   {
