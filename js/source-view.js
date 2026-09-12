@@ -35,7 +35,7 @@ const SOURCE_VIEW_HTML = `
       </div>
 
       <div id="pane-url" class="source-pane hidden" role="tabpanel" aria-labelledby="tab-url">
-        <p class="hint">Paste a link to an article, notes page or blog post. The page is opened quietly in the background, its readable text is taken, and the tab is closed again. Sign-in and JavaScript-rendered pages work, because it is a real page load.</p>
+        <p class="hint">Paste a link to an article, notes page or blog post. The page is opened quietly in the background, its readable text is taken as Markdown, and the tab is closed again. Headings and subheadings come through as headings. Sign-in and JavaScript-rendered pages work, because it is a real page load.</p>
         <input type="url" id="url-input" placeholder="https://example.com/article" autocomplete="off" spellcheck="false">
         <p class="hint" id="url-hint">Loaded text stays in memory only — the address is never sent to your AI provider.</p>
       </div>

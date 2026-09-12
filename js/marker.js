@@ -17,7 +17,9 @@ function setMarker(i) {
 
 function renderReadingState() {
   const readingNow = state.tts.active && state.tts.idx >= 0 ? state.tts.idx : -1;
-  els.reading.querySelectorAll('p.para').forEach((el) => {
+  // `.para`, not `p.para`: a heading carries the same class and a data-p, so it
+  // is a reading position exactly like a paragraph.
+  els.reading.querySelectorAll('.para').forEach((el) => {
     const i = parseInt(el.dataset.p, 10);
     el.classList.toggle('before', i < state.markerP);
     el.classList.toggle('marker', i === state.markerP);

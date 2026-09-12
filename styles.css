@@ -213,16 +213,35 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--a
   overscroll-behavior: contain;
   display: flex; flex-direction: column;
 }
-.reading p.para {
+.reading .para {
   font-size: 15.5px; line-height: 1.75; margin: 0 0 14px; padding: 2px 8px;
   border-radius: 6px; cursor: pointer; color: var(--text);
   transition: background 0.15s, opacity 0.2s, border-color 0.15s;
   border-left: 3px solid transparent;
 }
-.reading p.para:hover { background: var(--panel-2); }
-.reading p.para.after { opacity: 0.32; }
-.reading p.para.marker { border-left-color: var(--marker-line); background: var(--marker); }
-.reading p.para.reading-now { background: var(--marker); border-left-color: var(--marker-line); opacity: 1; }
+.reading .para:hover { background: var(--panel-2); }
+.reading .para.after { opacity: 0.32; }
+.reading .para.marker { border-left-color: var(--marker-line); background: var(--marker); }
+.reading .para.reading-now { background: var(--marker); border-left-color: var(--marker-line); opacity: 1; }
+
+/* Headings the source carried through as Markdown. They keep .para — same hover,
+   same dimming past the marker, same click-to-mark — and only change size and
+   weight, so the rule above stays the single definition of a reading position. */
+.reading .para:is(h1, h2, h3, h4, h5, h6) { font-weight: 700; line-height: 1.3; }
+.reading h1.para { font-size: 25px; margin: 26px 0 12px; }
+.reading h2.para { font-size: 20px; margin: 24px 0 10px; }
+.reading h3.para { font-size: 17px; margin: 20px 0 8px; }
+.reading h4.para { font-size: 15.5px; margin: 18px 0 6px; }
+.reading h5.para { font-size: 14.5px; margin: 16px 0 6px; }
+.reading h6.para { font-size: 13.5px; margin: 16px 0 6px; color: var(--text-dim); }
+.reading .para:first-child { margin-top: 0; }
+
+/* The page title, above the text and outside the paragraph list: it carries no
+   data-p, so it is not a reading position and cannot be marked or read aloud. */
+.source-title {
+  font-size: 28px; font-weight: 700; line-height: 1.25;
+  margin: 0 0 20px; padding: 0 8px; color: var(--text);
+}
 .empty-state {
   color: var(--text-dim); text-align: center; padding: 24px 20px;
   font-size: 13.5px; line-height: 1.7;

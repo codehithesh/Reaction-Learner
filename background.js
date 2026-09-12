@@ -13,6 +13,9 @@
 // every JavaScript-rendered site, and an extension ships no headless browser.
 // A real tab that is never focused renders the page exactly as route 1 does —
 // including signed-in and script-built content.
+//
+// Both routes hand back the same thing: a title and the page's text as Markdown,
+// so a page's own headings arrive as headings in the reading pane.
 
 const STORAGE_KEY = 'pendingGrab';
 const TAB_KEY = 'appTabId';
@@ -23,17 +26,79 @@ const POLL_MS = 250;
 
 // Injected into a page, so it may use the DOM freely.
 //
-// innerText — not textContent — because it inserts the line breaks between block
-// elements that the reader splits its paragraphs on. innerText needs a rendered
-// document to do that: on a DOMParser result it falls back to textContent and
-// the whole article collapses into one paragraph. That is the real reason this
-// path loads a tab instead of parsing fetched HTML.
+// The result is Markdown, not flat text. innerText separated the blocks but threw
+// away what they were, so an <h2> arrived as just another line and the reading pane
+// had nothing left to draw as a heading. Walking the tree keeps that structure:
+// a heading leaves here as "## Heading" and stays a heading all the way to the
+// reader, which is the whole point of parsing in the page rather than after it.
+//
+// ONLY headings and paragraphs are emitted, deliberately. Anything else — bold,
+// links, list bullets, code fences — would arrive at a renderer that does not
+// draw it yet and would show up as its own punctuation in the middle of the text.
+// Lists and blockquotes therefore survive as ordinary paragraphs, with their words
+// intact and their markup dropped. Widen this and the renderer together.
+//
+// Everything here is defined inside the function: chrome.scripting serialises it
+// and injects the source, so it cannot see anything outside its own body.
 function extractReadable() {
-  const pick = (el) => (el && el.innerText ? el.innerText : '');
+  const SKIP = {
+    SCRIPT: 1, STYLE: 1, NOSCRIPT: 1, TEMPLATE: 1, SVG: 1, CANVAS: 1, IFRAME: 1,
+    FORM: 1, BUTTON: 1, INPUT: 1, SELECT: 1, TEXTAREA: 1, NAV: 1,
+  };
+  const HEAD = { H1: 1, H2: 2, H3: 3, H4: 4, H5: 5, H6: 6 };
+  // Elements that hold one run of prose and nothing nested to walk into.
+  const LEAF = {
+    P: 1, FIGCAPTION: 1, DD: 1, DT: 1, TD: 1, TH: 1, CAPTION: 1, SUMMARY: 1,
+    ADDRESS: 1, BLOCKQUOTE: 1, LI: 1,
+  };
+
+  // The words of an element with nothing added, so a <br> becomes the space it
+  // looks like and a skipped element contributes nothing. textContent alone would
+  // run "a<br>b" together into "ab".
+  const words = (node) => {
+    let s = '';
+    const kids = node.childNodes;
+    for (let i = 0; i < kids.length; i++) {
+      const n = kids[i];
+      if (n.nodeType === 3) { s += n.nodeValue; continue; }
+      if (n.nodeType !== 1) continue;
+      const tag = n.tagName;
+      if (SKIP[tag] || n.hidden || n.getAttribute('aria-hidden') === 'true') continue;
+      s += tag === 'BR' ? ' ' : words(n);
+    }
+    return s;
+  };
+
+  const lines = [];
+  const push = (s) => {
+    const t = s.replace(/\s+/g, ' ').trim();
+    if (t) lines.push(t);
+  };
+
+  const walk = (node) => {
+    const kids = node.childNodes;
+    for (let i = 0; i < kids.length; i++) {
+      const n = kids[i];
+      if (n.nodeType === 3) { push(n.nodeValue); continue; }  // text loose in a container
+      if (n.nodeType !== 1) continue;
+      const tag = n.tagName;
+      if (SKIP[tag] || n.hidden || n.getAttribute('aria-hidden') === 'true') continue;
+      if (HEAD[tag]) { push('#'.repeat(HEAD[tag]) + ' ' + words(n)); continue; }
+      if (LEAF[tag]) { push(words(n)); continue; }
+      walk(n);   // containers: div, section, table, ul/ol, figure, header …
+    }
+  };
+
   const root = document.querySelector('article')
     || document.querySelector('main')
     || document.body;
-  return { title: document.title || '', url: location.href || '', text: pick(root) };
+  walk(root);
+
+  return {
+    title: document.title || '',
+    url: location.href || '',
+    text: lines.join('\n\n'),
+  };
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
