@@ -1,21 +1,29 @@
 // ============================================================
 // READER — the reading pane
 // ============================================================
-// Owns the text once it has arrived: splitting it into paragraphs and headings,
-// rendering them, and responding to a click on either.
+// Owns the text once it has arrived: turning it into segments, drawing them, and
+// responding to a click on one.
 //
 // It does not acquire text. Every way a source arrives — the modal's paste tab,
 // the modal's URL tab, a toolbar click — lives in js/source.js and ends by
 // calling loadSource() below. This file is the single entry point for showing a
 // source, and the single place the reading pane is drawn.
+//
+// It does not parse either. Markdown — what a block is, what it looks like, what
+// words it holds — belongs to js/markdown.js. Here a segment is just a reading
+// position with a block attached, and a block is just an element to draw.
 
 'use strict';
 
-function loadSource(text, title, url) {
+// `markdown` says whether the text arrived as Markdown and its structure is to be
+// drawn. Both extension routes always are — background.js emits Markdown — while
+// pasted text is whatever the user says it is (the paste tab's switch). Off means
+// literal: every line is its own paragraph and nothing is interpreted.
+function loadSource(text, title, url, markdown = true) {
   stopTTS();
   state.sourceTitle = title || '';
   state.sourceUrl = url || '';
-  state.paras = segmentText(text);
+  state.paras = segmentText(text, markdown);
   state.totalChars = text.length;
   state.markerP = -1;
   state.pending = null;
@@ -31,37 +39,6 @@ function loadSource(text, title, url) {
   setStatus(`Loaded ${who}: ${state.paras.length} paragraphs, ${fmtCount(state.totalChars)} chars`, 'success');
   updateReadPos();
   updateControls();
-}
-
-// A line of one to six hashes and a space is a heading — the one piece of Markdown
-// the reading pane draws. The hashes are stripped from the stored text, so the
-// reading pane, read-aloud and the slice sent for evaluation all see the plain
-// words; only `level` remembers that it was a heading.
-const HEADING_RE = /^(#{1,6})\s+(\S.*)$/;
-
-function segmentText(text) {
-  const clean = text.replace(/\r\n/g, '\n').replace(/\u00a0/g, ' ').trim();
-  // Preserve the author's structure: every line break starts a new paragraph,
-  // so single-newline-separated paragraphs are never merged into one wall of text.
-  const lines = clean.split(/\n+/).map((s) => s.trim()).filter(Boolean);
-  const out = [];
-  for (const line of lines) {
-    const head = HEADING_RE.exec(line);
-    if (head) { out.push({ text: head[2].trim(), level: head[1].length }); continue; }
-    if (line.length <= 2200) { out.push({ text: line, level: 0 }); continue; }
-    // Exceptionally long single-line paragraphs are split at sentence boundaries
-    // so marking and read-aloud stay reliable.
-    const sentences = line.match(/[^.!?]+[.!?]+["')\]]*|[^.!?]+$/g) || [line];
-    let cur = '';
-    for (const s of sentences) {
-      const piece = s.trim();
-      if (!piece) continue;
-      if ((cur + ' ' + piece).length > 1600 && cur) { out.push({ text: cur, level: 0 }); cur = piece; }
-      else cur = cur ? cur + ' ' + piece : piece;
-    }
-    if (cur) out.push({ text: cur, level: 0 });
-  }
-  return out.length ? out : [{ text: clean, level: 0 }];
 }
 
 // A page's <title> and its first <h1> are usually the same words with different
@@ -101,12 +78,13 @@ function renderReading() {
   }
 
   state.paras.forEach((p, i) => {
-    // One element per segment, heading or paragraph — but always `.para` with a
-    // data-p, so the marker, click-to-mark and read-aloud treat both the same.
-    const el = document.createElement(p.level ? 'h' + p.level : 'p');
-    el.className = 'para';
+    // The block draws itself — heading, list, table, code, math or plain text —
+    // and comes back as one element. `.para` and the data-p are stamped on here,
+    // in the one place that knows what a reading position is, so every block type
+    // is clickable, markable and readable without knowing anything about it.
+    const el = mdRenderBlock(p.block);
+    el.classList.add('para');
     el.dataset.p = String(i);
-    el.textContent = p.text;
     frag.appendChild(el);
   });
   els.reading.appendChild(frag);
@@ -115,6 +93,9 @@ function renderReading() {
 // ---------- wiring ----------
 function wireReader() {
   els.reading.addEventListener('click', (e) => {
+    // A link or an image chip inside the text is its own target: opening it must
+    // not also move the reading marker.
+    if (e.target.closest('a')) return;
     const pEl = e.target.closest('.para');
     if (!pEl) return;
     stopTTS();

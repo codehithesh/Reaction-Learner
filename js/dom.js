@@ -29,7 +29,8 @@ function cacheEls() {
     // source modal — markup in js/source-view.js, behaviour in js/source.js
     sourceTabs: $('source-tabs'), tabPaste: $('tab-paste'), tabUrl: $('tab-url'),
     panePaste: $('pane-paste'), paneUrl: $('pane-url'),
-    pasteText: $('paste-text'), urlInput: $('url-input'), urlHint: $('url-hint'),
+    pasteText: $('paste-text'), pasteMarkdown: $('paste-markdown'),
+    urlInput: $('url-input'), urlHint: $('url-hint'),
     loadSource: $('load-source'),
     themeSystem: $('theme-system'), themeLight: $('theme-light'), themeDark: $('theme-dark'),
     providerList: $('provider-list'),

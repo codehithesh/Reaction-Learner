@@ -20,6 +20,7 @@
   --read-max: 680px;            /* reading measure — ≈85 chars at 15.5px */
   --chat-max: 880px;            /* reactions measure — fits the eval grid in 3 columns */
   --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
 }
 [data-theme="light"] {
   --bg: #ffffff;
@@ -50,7 +51,8 @@ body {
   line-height: 1.5;
 }
 button { font: inherit; }
-/* one typeface everywhere — kill browser monospace defaults on form controls */
+/* one typeface everywhere — kill browser monospace defaults on form controls.
+   --mono is the one exception, and only for code and unrenderable math. */
 input, select, textarea { font-family: var(--font); }
 button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .hidden { display: none !important; }
@@ -218,6 +220,12 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--a
   border-radius: 6px; cursor: pointer; color: var(--text);
   transition: background 0.15s, opacity 0.2s, border-color 0.15s;
   border-left: 3px solid transparent;
+  /* The pane is a flex column, and a flex item that scrolls has no automatic
+     minimum height — so a table, a code block or a display equation (all of them
+     scroll containers, to stay readable on a narrow window) would be squeezed
+     down to its padding and its content hidden. These are reading positions in a
+     scrolling pane: they keep their natural height, always. */
+  flex: none;
 }
 .reading .para:hover { background: var(--panel-2); }
 .reading .para.after { opacity: 0.32; }
@@ -235,6 +243,83 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--a
 .reading h5.para { font-size: 14.5px; margin: 16px 0 6px; }
 .reading h6.para { font-size: 13.5px; margin: 16px 0 6px; color: var(--text-dim); }
 .reading .para:first-child { margin-top: 0; }
+
+/* ---------- the blocks Markdown can draw ----------
+   Every one of these keeps .para: same hover, same dimming past the marker, same
+   click-to-mark. Only the inside changes, so the rule above stays the single
+   definition of a reading position. */
+.reading .para > :first-child { margin-top: 0; }
+.reading .para > :last-child { margin-bottom: 0; }
+.reading .para p { margin: 0 0 10px; }
+
+/* inline code, in a heading or in the middle of a sentence */
+.reading .para code {
+  font-family: var(--mono); font-size: 0.88em;
+  background: var(--panel-2); border: 1px solid var(--border);
+  border-radius: 4px; padding: 0.05em 0.35em;
+}
+.reading .para a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+.reading .para del { color: var(--text-dim); }
+.reading .para strong { font-weight: 700; }
+.reading .para em { font-style: italic; }
+.reading .para img { max-width: 100%; }
+
+/* a fenced code block: its own surface, its own scroll, nothing re-wrapped */
+.reading .md-code {
+  background: var(--panel-2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 12px; overflow-x: auto;
+}
+.reading .md-code pre { margin: 0; }
+.reading .md-code code {
+  display: block; background: none; border: 0; padding: 0;
+  font-family: var(--mono); font-size: 12.5px; line-height: 1.65;
+  white-space: pre; tab-size: 4;
+}
+.reading .md-lang {
+  font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--text-dim); margin-bottom: 6px;
+}
+
+/* lists and quoted passages */
+.reading ul.para, .reading ol.para { padding-left: 30px; }
+.reading .para li { margin: 0 0 5px; }
+.reading .para li::marker { color: var(--text-dim); }
+.reading .para ul, .reading .para ol { margin: 6px 0; padding-left: 24px; }
+.reading .para li > p { margin: 0 0 6px; }
+.reading li.md-task { list-style: none; margin-left: -20px; }
+.reading li.md-task input { margin-right: 7px; accent-color: var(--accent); }
+.reading blockquote.para { border-left-color: var(--border); color: var(--text-dim); }
+
+/* a pipe table scrolls sideways rather than squeezing its columns */
+.reading .md-table { overflow-x: auto; }
+.reading .md-table table { border-collapse: collapse; width: 100%; font-size: 14px; }
+.reading .md-table th, .reading .md-table td {
+  border: 1px solid var(--border); padding: 6px 10px;
+  text-align: left; vertical-align: top;
+}
+.reading .md-table thead th { background: var(--panel-2); font-weight: 700; }
+
+/* a thematic break is a position with no words: it must not look clickable */
+.reading hr.para { border: 0; border-top: 1px solid var(--border); height: 0; padding: 0; margin: 20px 0; cursor: default; }
+.reading hr.para:hover { background: none; }
+.reading hr.para.marker { border-top-color: var(--marker-line); }
+
+/* math: drawn by the browser as MathML, never fetched */
+.reading .md-math { text-align: center; overflow-x: auto; padding: 6px 8px; }
+.reading .md-math math { font-size: 1.15em; }
+.reading .md-tex {
+  font-family: var(--mono); font-size: 13px;
+  background: var(--panel-2); border: 1px solid var(--border);
+  border-radius: 5px; padding: 1px 6px;
+}
+/* an image is a labelled chip, not a download — see js/markdown.js */
+.reading .md-img {
+  display: inline-block; font-size: 12.5px; color: var(--text-dim);
+  border: 1px dashed var(--border); border-radius: 6px; padding: 1px 8px;
+  text-decoration: none; max-width: 100%;
+}
+.reading .md-img::before { content: "image · "; color: var(--text-dim); }
+a.md-img:hover { border-color: var(--accent); color: var(--text); }
 
 /* The page title, above the text and outside the paragraph list: it carries no
    data-p, so it is not a reading position and cannot be marked or read aloud. */
@@ -430,6 +515,21 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--a
    gap so switching tabs never shifts the surrounding spacing. */
 .source-pane { display: flex; flex-direction: column; gap: 10px; }
 #source-tabs { margin-bottom: 2px; }
+
+/* the paste pane's format switch — a checkbox and its label on one line. The
+   generic label rule above is a stacked block label, so this row overrides its
+   display and spacing to sit inline with the box. */
+.check-row {
+  display: flex; align-items: center; gap: 8px; margin-top: 0;
+  font-size: 12px; font-weight: 500; color: var(--text-dim);
+  cursor: pointer; user-select: none;
+}
+.check-row:hover { color: var(--text); }
+.check-row input[type="checkbox"] {
+  flex: none; width: 14px; height: 14px; margin: 0;
+  accent-color: var(--accent); cursor: pointer;
+}
+.check-row b { color: var(--text); font-weight: 700; }
 
 /* provider cards — stacked, one after another */
 #provider-list { display: flex; flex-direction: column; gap: 16px; }

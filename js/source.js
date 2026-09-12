@@ -3,11 +3,12 @@
 // ============================================================
 // Owns the Add source text modal and the three ways a source is acquired:
 //
-//   1 · the paste tab        — text the user typed or pasted in;
+//   1 · the paste tab        — text the user typed or pasted in, read as Markdown
+//                              or literally, per the pane's own switch;
 //   2 · the URL tab          — an address the service worker opens in a hidden
-//                              tab and reads (see background.js);
-//   3 · a toolbar click      — text the active tab handed over, collected by
-//                              consumePendingGrab() on load.
+//                              tab and reads as Markdown (see background.js);
+//   3 · a toolbar click      — text the active tab handed over, Markdown too,
+//                              collected by consumePendingGrab() on load.
 //
 // Every path ends by calling loadSource(), which lives in js/reader.js. This
 // file acquires; the reader renders. Nothing here touches the reading pane.
@@ -155,7 +156,7 @@ async function loadFromUrl(url, asking) {
 
     const res = await chrome.runtime.sendMessage({ type: 'fetch-url', url });
     if (res && res.ok && res.text && res.text.trim()) {
-      loadSource(res.text, res.title || url, res.url || url);
+      loadSource(res.text, res.title || url, res.url || url, true);
       closeModal(els.sourceModal);
       els.urlInput.value = '';
       return;
@@ -169,10 +170,14 @@ async function loadFromUrl(url, asking) {
 }
 
 // ---------- the paste tab ----------
+// The pane's own switch decides how the text is read: Markdown by default, so
+// pasted notes draw the same headings a fetched page does; unticked, the text is
+// loaded exactly as typed. The checkbox carries the choice itself, so it survives
+// the modal closing and reopening, the same way the chosen tab does.
 function loadPastedText() {
   const text = els.pasteText.value.trim();
   if (!text) { setStatus('Paste some text first', 'warn'); return; }
-  loadSource(text, 'Pasted text', '');
+  loadSource(text, 'Pasted text', '', els.pasteMarkdown.checked);
   els.pasteText.value = '';
   closeModal(els.sourceModal);
 }
@@ -189,7 +194,7 @@ async function consumePendingGrab() {
     if (pendingGrab && pendingGrab.token === tok) {
       chrome.storage.session.remove('pendingGrab');
       if (pendingGrab.text && pendingGrab.text.trim()) {
-        loadSource(pendingGrab.text, pendingGrab.title || '', pendingGrab.url || '');
+        loadSource(pendingGrab.text, pendingGrab.title || '', pendingGrab.url || '', true);
         setStatus('Loaded text from the page you opened this from', 'success');
       } else {
         setStatus('Nothing readable was found on that page — use the + button to paste instead.', 'warn');

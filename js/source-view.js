@@ -31,6 +31,12 @@ const SOURCE_VIEW_HTML = `
       <div id="pane-paste" class="source-pane" role="tabpanel" aria-labelledby="tab-paste">
         <p class="hint">Paste the article, lecture notes or chapter you want to study. Paragraphs and line breaks are kept. It stays in memory only.</p>
         <textarea id="paste-text" rows="10" placeholder="Paste any text — an article, lecture notes, a book chapter…" spellcheck="false"></textarea>
+        <!-- Markdown is on by default so pasted notes read like fetched pages do.
+             Unticking it loads the text exactly as typed, hash lines and all. -->
+        <label class="check-row" for="paste-markdown">
+          <input type="checkbox" id="paste-markdown" checked>
+          <span>Format as Markdown — headings, lists, tables, code, quotes and math are drawn</span>
+        </label>
         <p class="hint">Tip: to study a webpage, click the extension’s toolbar icon while on that page — its readable text loads automatically.</p>
       </div>
 

@@ -70,6 +70,15 @@ function speakNext() {
     setStatus('Read-aloud finished', 'success');
     return;
   }
+  // A position with no words — a rule between sections, an empty heading. There
+  // is nothing to say, and an empty utterance is not reliably ended by the
+  // engine, which would stall the run here, so it is marked read and skipped.
+  if (!String(state.paras[i].text || '').trim()) {
+    setMarker(i);
+    state.tts.idx = i + 1;
+    speakNext();
+    return;
+  }
   const utter = new SpeechSynthesisUtterance(state.paras[i].text);
   const v = activeVoice();
   if (v) utter.voice = v;

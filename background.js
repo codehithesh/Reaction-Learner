@@ -32,11 +32,13 @@ const POLL_MS = 250;
 // a heading leaves here as "## Heading" and stays a heading all the way to the
 // reader, which is the whole point of parsing in the page rather than after it.
 //
-// ONLY headings and paragraphs are emitted, deliberately. Anything else — bold,
-// links, list bullets, code fences — would arrive at a renderer that does not
-// draw it yet and would show up as its own punctuation in the middle of the text.
-// Lists and blockquotes therefore survive as ordinary paragraphs, with their words
-// intact and their markup dropped. Widen this and the renderer together.
+// ONLY headings and paragraphs are emitted, deliberately — the one part of this
+// pipeline that has not grown with the renderer. js/markdown.js now draws lists,
+// tables, code, quotes and math, so a page's own lists and tables could be
+// carried through as real Markdown too; until this walker is widened, they arrive
+// as their words inside ordinary paragraphs. What must never happen is the
+// reverse — emitting markup the renderer would print as punctuation — so this and
+// the renderer are widened together or not at all.
 //
 // Everything here is defined inside the function: chrome.scripting serialises it
 // and injects the source, so it cannot see anything outside its own body.
